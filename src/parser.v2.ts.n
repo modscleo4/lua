@@ -1,0 +1,63 @@
+'use strict';
+
+import { Token } from "./tokenizer.js";
+
+class Parser {
+    #tokens: Token[] = [];
+    #index = 0;
+
+    constructor(tokens: Token[]) {
+        this.#tokens = tokens;
+    }
+
+    expect(token: Partial<Token>) {
+        for (const property in token) {
+            if (token[property as keyof typeof token] !== this.#tokens[this.#index][property as keyof Token]) {
+                throw new Error(`Expected ${JSON.stringify(token)} but got ${JSON.stringify(this.#tokens[this.#index])}`);
+            }
+        }
+
+        this.#index++;
+    }
+
+    get current() {
+        return this.#tokens[this.#index];
+    }
+
+    chunk() {
+        this.block();
+
+        this.expect({ type: 'EOF' });
+    }
+
+    block() {
+        this.expect({ type: 'separator', additional: 'open' });
+
+        while (this.#tokens[this.#index].type !== 'separator' || this.#tokens[this.#index].additional !== 'close') {
+            this.stat();
+        }
+
+        this.retstat();
+    }
+
+    stat() {
+        this.expect({ type: 'identifier' });
+        this.expect({ type: 'separator', additional: 'equals' });
+        this.expression();
+    }
+
+    retstat() {
+        this.expect({ type: 'reserved', value: 'return' });
+        try {
+            this.expression();
+        } catch (e) {
+            //
+        }
+
+        try {
+            this.expect({ type: 'separator', additional: 'semicolon' });
+        } catch (e) {
+            //
+        }
+    }
+}
