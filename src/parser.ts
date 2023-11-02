@@ -1,5 +1,3 @@
-'use strict';
-
 import { Token } from "./tokenizer.js";
 
 type Syntax = {
@@ -30,14 +28,14 @@ type Syntax = {
     unop: GrammarSymbol[][];
 };
 
-interface GrammarSymbol {
+export interface GrammarSymbol {
     equals(other: GrammarSymbol): boolean;
 }
 
 /**
  * A terminal is a token that is expected to be found in the code.
  */
-class Terminal implements GrammarSymbol {
+export class Terminal implements GrammarSymbol {
     #token: Partial<Token>;
 
     constructor(token: Partial<Token>) {
@@ -63,14 +61,14 @@ class Terminal implements GrammarSymbol {
     }
 
     toString() {
-        return JSON.stringify(this.token);
+        return '‘' + JSON.stringify(this.token) + '’';
     }
 }
 
 /**
  * A non-terminal is a rule that is expected to be found in the code.
  */
-class NonTerminal implements GrammarSymbol {
+export class NonTerminal implements GrammarSymbol {
     #rule: keyof Syntax;
 
     constructor(rule: keyof Syntax) {
@@ -90,14 +88,14 @@ class NonTerminal implements GrammarSymbol {
     }
 
     toString() {
-        return '<' + this.rule + '>';
+        return this.rule;
     }
 }
 
 /**
  * A repeating is a list of symbols that are expected to be found in the code.
  */
-class Repeating implements GrammarSymbol {
+export class Repeating implements GrammarSymbol {
     #symbols: GrammarSymbol[];
 
     constructor(symbols: GrammarSymbol[]) {
@@ -127,14 +125,14 @@ class Repeating implements GrammarSymbol {
     }
 
     toString() {
-        return `[${this.symbols.join(', ')}]`;
+        return `{${this.symbols.join(', ')}}`;
     }
 }
 
 /**
  * An optional is a list of symbols that are expected to be found in the code.
  */
-class Optional implements GrammarSymbol {
+export class Optional implements GrammarSymbol {
     #symbols: GrammarSymbol[];
 
     constructor(symbols: GrammarSymbol[]) {
@@ -239,7 +237,7 @@ const syntax: Syntax = {
         [new Terminal({ type: 'reserved', value: 'FOR' }), new NonTerminal('namelist'), new Terminal({ type: 'reserved', value: 'IN' }), new NonTerminal('explist'), new Terminal({ type: 'reserved', value: 'DO' }), new NonTerminal('block'), new Terminal({ type: 'reserved', value: 'END' })],
         [new Terminal({ type: 'reserved', value: 'FUNCTION' }), new NonTerminal('funcname'), new NonTerminal('funcbody')],
         [new Terminal({ type: 'reserved', value: 'LOCAL' }), new Terminal({ type: 'reserved', value: 'FUNCTION' }), new Terminal({ type: 'identifier' }), new NonTerminal('funcbody')],
-        [new Terminal({ type: 'reserved', value: 'LOCAL' }), new NonTerminal('namelist'), new Optional([new Terminal({ type: 'operator', value: '=' }), new NonTerminal('explist')])],
+        [new Terminal({ type: 'reserved', value: 'LOCAL' }), new NonTerminal('attnamelist'), new Optional([new Terminal({ type: 'operator', value: '=' }), new NonTerminal('explist')])],
     ],
 
     /**
@@ -253,7 +251,7 @@ const syntax: Syntax = {
      * attrib ::= [‘<’ Name ‘>’]
      */
     attrib: [
-        [new Terminal({ type: 'operator', value: '<' }), new Terminal({ type: 'identifier' }), new Terminal({ type: 'operator', value: '>' })],
+        [new Optional([new Terminal({ type: 'operator', value: '<' }), new Terminal({ type: 'identifier' }), new Terminal({ type: 'operator', value: '>' })])],
     ],
 
     /**
@@ -448,9 +446,7 @@ const syntax: Syntax = {
     ],
 };
 
-type ParseToken = Token & { __matches__: string[]; };
-
-function precedence(operator: ParseToken): number {
+function precedence(operator: Token): number {
     if (operator.type !== 'operator') {
         throw new Error('Expected operator');
     }
@@ -497,17 +493,19 @@ function precedence(operator: ParseToken): number {
     return 0;
 }
 
-type AbstractSyntaxTree = {
+export type AbstractSyntaxTree = {
     rule: keyof Syntax;
     parsed: {
         grammarSymbol: GrammarSymbol;
         token?: Token;
+        children?: AbstractSyntaxTree[];
     }[];
     children: AbstractSyntaxTree[];
 };
 
-function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = []): {
+function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], reversed: boolean = false): {
     matches: false;
+    parsedTokens: number;
     error: string;
 } | {
     matches: true;
@@ -518,11 +516,15 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
     const parsed: { grammarSymbol: GrammarSymbol; token?: Token; children?: AbstractSyntaxTree[]; }[] = [];
 
     for (const grammarSymbol of symbols) {
+        if (j < 0 || j >= tokens.length) {
+            return { matches: false, parsedTokens: j - i, error: 'Unexpected end of input' };
+        }
+
         if (grammarSymbol instanceof Terminal) {
             // Terminal, check if the token matches
             for (const property in grammarSymbol.token) {
                 if (grammarSymbol.token[property as keyof typeof grammarSymbol.token] !== tokens[j][property as keyof Token]) {
-                    return { matches: false, error: `Expected token ${JSON.stringify(grammarSymbol.token)} but got ${JSON.stringify(tokens[j])}` };
+                    return { matches: false, parsedTokens: j - i, error: `Expected token ${JSON.stringify(grammarSymbol.token)} but got ${JSON.stringify(tokens[j])}` };
                 }
             }
 
@@ -531,16 +533,16 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
             j++;
         } else if (grammarSymbol instanceof NonTerminal) {
             // Non-terminal, check if the rule matches
-            const matchingResult = ruleMatches(grammarSymbol.rule, tokens, j, stack);
+            const matchingResult = ruleMatches(grammarSymbol.rule, tokens, j, stack, reversed);
             if (!matchingResult.matches) {
-                return { matches: false, error: `No rule matches for ${grammarSymbol.rule}` };
+                return { matches: false, parsedTokens: j - i, error: matchingResult.error };
             }
 
-            j += matchingResult.parsedTokens; // Skip the tokens that were matched
-
             parsed.push({ grammarSymbol, children: [matchingResult.tree] });
+
+            j += matchingResult.parsedTokens; // Skip the tokens that were matched
         } else if (grammarSymbol instanceof Optional) {
-            const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, j, stack);
+            const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, j, stack, reversed);
             if (!matchingResult.matches) {
                 continue;
             }
@@ -552,7 +554,7 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
             }
         } else if (grammarSymbol instanceof Repeating) {
             while (true) {
-                const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, j, stack);
+                const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, j, stack, reversed);
                 if (!matchingResult.matches) {
                     break;
                 }
@@ -566,6 +568,7 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
 
             continue;
         } else {
+            // This should never happen
             throw new Error('Unknown grammar symbol');
         }
     }
@@ -573,26 +576,37 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
     return { matches: true, parsedTokens: j - i, parsed };
 }
 
-function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = []): {
+function maxRecursion(rule: keyof Syntax, j: number): number {
+    if ((rule === 'prefixexp') && j === 0) {
+        return 0;
+    } else if (rule === 'prefixexp' && j === 1) {
+        return 0;
+    }
+
+    return 0;
+}
+
+function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], reversed: boolean = false): {
     matches: false;
+    parsedTokens: number;
     error: string;
 } | {
     matches: true;
     parsedTokens: number;
     tree: AbstractSyntaxTree,
 } {
-    // TODO: fix operator precedence
-
     const tree: AbstractSyntaxTree = {
         rule,
         parsed: [],
         children: [],
     };
     let maxI = -1;
+    let maxParsed = 0;
+    let error = `No rule matches for ${rule}`;
 
     const parserRules = syntax[rule];
-    for (let j = 0; j < parserRules.length; j++) {
-        if (stack.find(r => r.rule === rule && r.i === i && r.j === j)) {
+    outer: for (let j = 0; j < parserRules.length; j++) {
+        if (stack.filter(r => r.rule === rule && r.i === i && r.j === j).length > maxRecursion(rule, j)) {
             // Avoid left recursion, we already are in this rule
             continue;
         }
@@ -600,10 +614,35 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
         stack.push({ rule, i, j });
 
         try {
-            const symbols = parserRules[j];
-            const matchingResult = tokensMatchSymbols(symbols, tokens, i, stack);
+            const symbols = reversed ? [...parserRules[j]].reverse() : parserRules[j];
+            const matchingResult = tokensMatchSymbols(symbols, tokens, i, stack, reversed);
             if (!matchingResult.matches) {
+                if (matchingResult.parsedTokens > maxParsed || maxParsed === 0) {
+                    maxParsed = matchingResult.parsedTokens;
+                    error = matchingResult.error;
+                }
+
                 continue;
+            }
+
+            if (rule === 'prefixexp' && (j === 0 || j === 1) && !reversed) { // prefixexp is left-recursive, also try to parse from the right
+                const reversedSymbols = [...symbols].reverse();
+                let _i = tokens.length - 1;
+                while (_i > i + matchingResult.parsedTokens) {
+                    const reversedMatchingResult = tokensMatchSymbols(reversedSymbols, [...tokens].reverse(), tokens.length - 1 - _i, [], true);
+                    if (reversedMatchingResult.matches && reversedMatchingResult.parsedTokens > matchingResult.parsedTokens && _i - reversedMatchingResult.parsedTokens + 1 === i) {
+                        const newI = i + reversedMatchingResult.parsedTokens;
+                        const parsed = reversedMatchingResult.parsed;
+
+                        if (newI > maxI) {
+                            maxI = newI;
+                            tree.parsed = parsed;
+                            continue outer;
+                        }
+                    }
+
+                    _i--;
+                }
             }
 
             const newI = i + matchingResult.parsedTokens;
@@ -619,7 +658,23 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
     }
 
     if (maxI === -1) {
-        return { matches: false, error: `No rule matches for ${rule}` };
+        return { matches: false, parsedTokens: maxParsed, error };
+    }
+
+    if (reversed) {
+        tree.parsed.reverse();
+    }
+
+    for (const p of tree.parsed) {
+        if (reversed && p.children) {
+            p.children.reverse();
+        }
+
+        for (const c of p.children ?? []) {
+            tree.children.push(c);
+        }
+
+        p.children = [];
     }
 
     const parsedTokens = maxI - i;
@@ -627,13 +682,133 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
     return { matches: true, parsedTokens, tree };
 }
 
+function fixOperatorPrecedence(tree: AbstractSyntaxTree): AbstractSyntaxTree {
+    if (tree.rule === 'exp' && tree.children.length === 3 && tree.children[1].rule === 'binop') {
+        /**
+         *       <binop>
+         *      /       \
+         * <lhs>        <rhs>
+         */
+        const lhs = tree.children[0];
+        const operator = tree.children[1].parsed[0];
+        const rhs = tree.children[2];
+
+        if (lhs.rule === 'exp' && lhs.children.length === 3 && lhs.children[1].rule === 'binop') {
+            /**
+             *       <binop>
+             *      /       \
+             * <lhs>        <rhs>
+             */
+            const leftLhs = lhs.children[0];
+            const leftOperator = lhs.children[1].parsed[0];
+            const leftRhs = lhs.children[2];
+
+            if (precedence(leftOperator.token!) < precedence(operator.token!)) {
+                tree.children[0] = leftRhs;
+                lhs.children[2] = tree;
+                tree = lhs;
+            }
+        } else if (lhs.rule === 'exp' && lhs.children.length === 2 && lhs.children[0].rule === 'unop') {
+            /**
+             *       <unop>
+             *              \
+             *              <rhs>
+             */
+            const leftOperator = lhs.children[0].parsed[0];
+            const leftRhs = lhs.children[1];
+
+            if (precedence(leftOperator.token!) < precedence(operator.token!)) {
+                tree.children[1] = leftRhs;
+                lhs.children[1] = tree;
+                tree = lhs;
+            }
+        } else if (rhs.rule === 'exp' && rhs.children.length === 3 && rhs.children[1].rule === 'binop') {
+            /**
+             *       <binop>
+             *      /       \
+             * <lhs>        <rhs>
+             */
+            const rightLhs = rhs.children[0];
+            const rightOperator = rhs.children[1].parsed[0];
+            const rightRhs = rhs.children[2];
+
+            if (precedence(rightOperator.token!) < precedence(operator.token!)) {
+                tree.children[2] = rightLhs;
+                rhs.children[0] = tree;
+                tree = rhs;
+            }
+        } else if (rhs.rule === 'exp' && rhs.children.length === 2 && rhs.children[0].rule === 'unop') {
+            /**
+             *       <unop>
+             *              \
+             *              <rhs>
+             */
+            const rightOperator = rhs.children[0].parsed[0];
+            const rightRhs = rhs.children[1];
+
+            if (precedence(rightOperator.token!) < precedence(operator.token!)) {
+                tree.children[1] = rightRhs;
+                rhs.children[1] = tree;
+                tree = rhs;
+            }
+        }
+    } else if (tree.rule === 'exp' && tree.children.length === 2 && tree.children[0].rule === 'unop') {
+        /**
+         *       <unop>
+         *              \
+         *              <rhs>
+         */
+        const operator = tree.children[0].parsed[0];
+        const rhs = tree.children[1];
+
+        if (rhs.rule === 'exp' && rhs.children.length === 3 && rhs.children[1].rule === 'binop') {
+            /**
+             *       <binop>
+             *      /       \
+             * <lhs>        <rhs>
+             */
+            const rightLhs = rhs.children[0];
+            const rightOperator = rhs.children[1].parsed[0];
+            const rightRhs = rhs.children[2];
+
+            if (precedence(rightOperator.token!) < precedence(operator.token!)) {
+                tree.children[2] = rightLhs;
+                rhs.children[0] = tree;
+                tree = rhs;
+            }
+        } else if (rhs.rule === 'exp' && rhs.children.length === 2 && rhs.children[0].rule === 'unop') {
+            /**
+             *       <unop>
+             *              \
+             *              <rhs>
+             */
+            const rightOperator = rhs.children[0].parsed[0];
+            const rightRhs = rhs.children[1];
+
+            if (precedence(rightOperator.token!) < precedence(operator.token!)) {
+                tree.children[1] = rightRhs;
+                rhs.children[1] = tree;
+                tree = rhs;
+            }
+        }
+    }
+
+    for (let i = 0; i < tree.children.length; i++) {
+        tree.children[i] = fixOperatorPrecedence(tree.children[i]);
+    }
+
+    return tree;
+}
+
 export function parser(tokens: Token[]): {
-    tree: AbstractSyntaxTree,
+    tree: AbstractSyntaxTree;
 } {
     const parsed = ruleMatches('chunk', tokens);
     if (!parsed.matches) {
         throw new Error(parsed.error);
     }
+
+    fixOperatorPrecedence(parsed.tree);
 
     return parsed; // Check if the tokens are a valid chunk
 }

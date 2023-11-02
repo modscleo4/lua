@@ -34,8 +34,15 @@ print 'Lua is life'
 --a[i]=2*3*1
 --print(1*2+3)
 --a=1*2*3
-
---[[
+---[[
+b = 1
+function c(a)
+    return a
+end
+--]]
+a = b + c(print or io.write)('marcoantoniorahalsacoman')
+--]]
+---[[
 function factorial(n)
   local x = 1
   for i = 2, n do
@@ -47,9 +54,11 @@ end
 
 --a = { [f(1)] = g; "x", "y"; x = 1, f(x), [30] = 23; 45 }
 --print(b())
-a = 1 * 2 + 3--factorial(1)
+--print(1)
+a = 1 * 2 + factorial(1)
+print(a)
 
---print(factorial(1) * factorial(2))
+print(factorial(4))
 
 --[[
     print(

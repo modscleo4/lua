@@ -1,5 +1,3 @@
-'use strict';
-
 /**
  * Tokens for Lua
  */
@@ -126,7 +124,7 @@ function constantType(str: string): string | null {
 }
 
 export type Token = {
-    type: string,
+    type: 'comment' | 'operator' | 'constant' | 'reserved' | 'identifier' | 'separator' | 'EOF',
     match: string,
     value: string,
     additional: string | null,
