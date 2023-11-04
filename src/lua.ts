@@ -16,11 +16,11 @@
  * @author Dhiego Cassiano Fogaça Barbosa <modscleo4@outlook.com>
  */
 
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 
 import { tokenizer } from "./tokenizer.js";
 import { ParsingError, parser } from "./parser.js";
-import { LuaScope, interpret, toLuaValue } from "./interpreter.js";
+import { LuaScope, LuaType, interpret, toLuaValue } from "./interpreter.js";
 
 const code = readFileSync('test.lua', 'utf8');
 
@@ -30,9 +30,19 @@ try {
 
     const globalScope: LuaScope = new Map();
 
-    const printFunction = toLuaValue(function (args: LuaScope) { console.log(args.get(toLuaValue('v'))!.jsValue); return toLuaValue(null); });
+    const luaPrintFn = function (globalScope: LuaScope, args: LuaScope) {
+        const v = args.get(toLuaValue('v')) ?? toLuaValue(null);
+        if (v.type === LuaType.Table) {
+            console.log('table: ' + v.jsValue);
+            return toLuaValue(null);
+        }
+
+        console.log(v.jsValue ?? '');
+        return toLuaValue(null);
+    };
+    const printFunction = toLuaValue(luaPrintFn);
     printFunction.name = 'print';
-    printFunction.arguments = [toLuaValue('v')];
+    printFunction.arguments = ['v'];
     globalScope.set(toLuaValue(printFunction.name), printFunction);
 
     //console.log(resultTokensFiltered);
@@ -44,6 +54,7 @@ try {
         body: parser(resultTokensFiltered),
     };
 
+    writeFileSync('ast.json', JSON.stringify(parserResult, null, 2));
     //console.dir(parserResult, { depth: null });
 
     interpret(parserResult.body.tree, globalScope);

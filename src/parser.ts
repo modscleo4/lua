@@ -465,8 +465,9 @@ const syntax: Syntax = {
 };
 
 function precedence(operator: Token): number {
-    if (operator.type !== 'operator') {
-        throw new Error('Expected operator');
+    if (operator.type !== 'operator' && (operator.type === 'reserved' && operator.value !== 'AND' && operator.value !== 'OR' && operator.value !== 'NOT')) {
+        console.log(operator);
+        throw new Error(`Expected operator, got ${operator.type}`);
     }
 
     switch (operator.value) {
@@ -512,13 +513,11 @@ function precedence(operator: Token): number {
 }
 
 export type AbstractSyntaxTree = {
-    rule: keyof Syntax;
-    parsed: {
-        grammarSymbol: GrammarSymbol;
-        token?: Token;
-        children?: AbstractSyntaxTree[];
-    }[];
+    type: keyof Syntax;
     children: AbstractSyntaxTree[];
+} | {
+    type: 'token';
+    token: Token;
 };
 
 function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], reversed: boolean = false): {
@@ -527,71 +526,128 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
     error: string;
 } | {
     matches: true;
-    parsedTokens: number;
-    parsed: { grammarSymbol: GrammarSymbol; token?: Token; children?: AbstractSyntaxTree[]; }[];
+    tries: {
+        parsedTokens: number;
+        children: AbstractSyntaxTree[];
+    }[];
 } {
-    let j = i;
-    const parsed: { grammarSymbol: GrammarSymbol; token?: Token; children?: AbstractSyntaxTree[]; }[] = [];
+    const tries: {
+        failed: boolean;
+        error?: string;
+        j: number;
+        k: number;
+        children: AbstractSyntaxTree[];
+    }[] = [{ j: i, k: -1, children: [], failed: false }];
 
-    for (const grammarSymbol of symbols) {
-        if (j < 0 || j >= tokens.length) {
-            return { matches: false, parsedTokens: j - i, error: 'Unexpected end of input' };
-        }
+    outer: for (let c = 0; c < tries.length; c++) {
+        const currTry = tries[c];
+        let k = currTry.k + 1;
+        inner: for (; k < symbols.length; k++) {
+            const grammarSymbol = symbols[k];
+            if (currTry.j < 0 || currTry.j >= tokens.length) {
+                currTry.failed = true;
+                currTry.error = 'Unexpected end of input';
+                continue outer;
+            }
 
-        if (grammarSymbol instanceof Terminal) {
-            // Terminal, check if the token matches
-            for (const property in grammarSymbol.token) {
-                if (grammarSymbol.token[property as keyof typeof grammarSymbol.token] !== tokens[j][property as keyof Token]) {
-                    return { matches: false, parsedTokens: j - i, error: `Expected token ${JSON.stringify(grammarSymbol.token)} but got ${JSON.stringify(tokens[j])}` };
+            if (grammarSymbol instanceof Terminal) {
+                // Terminal, check if the token matches
+                for (const property in grammarSymbol.token) {
+                    if (grammarSymbol.token[property as keyof typeof grammarSymbol.token] !== tokens[currTry.j][property as keyof Token]) {
+                        currTry.failed = true;
+                        currTry.error = `Expected ${JSON.stringify(grammarSymbol.token)} but got ${JSON.stringify(tokens[currTry.j])}`;
+                        continue outer;
+                    }
                 }
-            }
 
-            parsed.push({ grammarSymbol, token: tokens[j] });
+                currTry.children.push({ type: 'token', token: tokens[currTry.j] });
 
-            j++;
-        } else if (grammarSymbol instanceof NonTerminal) {
-            // Non-terminal, check if the rule matches
-            const matchingResult = ruleMatches(grammarSymbol.rule, tokens, j, stack, reversed);
-            if (!matchingResult.matches) {
-                return { matches: false, parsedTokens: j - i, error: matchingResult.error };
-            }
-
-            parsed.push({ grammarSymbol, children: [matchingResult.tree] });
-
-            j += matchingResult.parsedTokens; // Skip the tokens that were matched
-        } else if (grammarSymbol instanceof Optional) {
-            const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, j, stack, reversed);
-            if (!matchingResult.matches) {
-                continue;
-            }
-
-            j += matchingResult.parsedTokens; // Skip the tokens that were matched
-
-            for (const p of matchingResult.parsed) {
-                parsed.push(p);
-            }
-        } else if (grammarSymbol instanceof Repeating) {
-            while (true) {
-                const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, j, stack, reversed);
+                currTry.j++;
+            } else if (grammarSymbol instanceof NonTerminal) {
+                // Non-terminal, check if the rule matches
+                const matchingResult = ruleMatches(grammarSymbol.rule, tokens, currTry.j, stack, reversed);
                 if (!matchingResult.matches) {
-                    break;
+                    currTry.failed = true;
+                    currTry.error = matchingResult.error;
+                    continue outer;
                 }
 
-                j += matchingResult.parsedTokens; // Skip the tokens that were matched
+                // save the new tries
+                for (let l = 1; l < matchingResult.tries.length; l++) {
+                    const c: AbstractSyntaxTree[] = [...currTry.children];
+                    c.push(matchingResult.tries[l].tree);
 
-                for (const p of matchingResult.parsed) {
-                    parsed.push(p);
+                    tries.push({ j: currTry.j + matchingResult.tries[l].parsedTokens, k, children: c, failed: false });
                 }
+
+                currTry.children.push(matchingResult.tries[0].tree);
+
+                currTry.j += matchingResult.tries[0].parsedTokens; // Skip the tokens that were matched
+            } else if (grammarSymbol instanceof Optional) {
+                const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, currTry.j, stack, reversed);
+                if (!matchingResult.matches) {
+                    continue;
+                }
+
+                // save the new tries
+                for (let l = 1; l < matchingResult.tries.length; l++) {
+                    const c: AbstractSyntaxTree[] = [...currTry.children];
+                    for (const p of matchingResult.tries[l].children) {
+                        c.push(p);
+                    }
+
+                    tries.push({ j: currTry.j + matchingResult.tries[l].parsedTokens, k, children: c, failed: false });
+                }
+
+                currTry.j += matchingResult.tries[0].parsedTokens; // Skip the tokens that were matched
+
+                for (const p of matchingResult.tries[0].children) {
+                    currTry.children.push(p);
+                }
+            } else if (grammarSymbol instanceof Repeating) {
+                const repeatingTries = [currTry];
+                for (let l = 0; l < repeatingTries.length; l++) {
+                    const ct = repeatingTries[l];
+                    while (true) {
+                        const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, ct.j, stack, reversed);
+                        if (!matchingResult.matches) {
+                            break;
+                        }
+
+                        // save the new tries
+                        for (let l = 1; l < matchingResult.tries.length; l++) {
+                            const c: AbstractSyntaxTree[] = [...ct.children];
+                            for (const p of matchingResult.tries[l].children) {
+                                c.push(p);
+                            }
+
+                            repeatingTries.push({ j: ct.j + matchingResult.tries[l].parsedTokens, k, children: c, failed: false });
+                            tries.push({ j: ct.j + matchingResult.tries[l].parsedTokens, k, children: c, failed: false });
+                        }
+
+                        ct.j += matchingResult.tries[0].parsedTokens; // Skip the tokens that were matched
+
+                        for (const p of matchingResult.tries[0].children) {
+                            ct.children.push(p);
+                        }
+                    }
+                }
+
+                repeatingTries.sort((a, b) => b.j - a.j);
+                currTry.j = repeatingTries[0].j;
+                currTry.children = repeatingTries[0].children;
             }
-
-            continue;
-        } else {
-            // This should never happen
-            throw new Error('Unknown grammar symbol');
         }
     }
 
-    return { matches: true, parsedTokens: j - i, parsed };
+    tries.sort((a, b) => b.j - a.j);
+
+    if (tries.filter(t => !t.failed).length === 0) {
+        const maxTry = tries[0];
+        return { matches: false, parsedTokens: maxTry.j - i, error: maxTry.error! };
+    }
+
+    return { matches: true, tries: tries.filter(t => !t.failed).map(t => ({ parsedTokens: t.j - i, children: t.children })) };
 }
 
 function maxRecursion(rule: keyof Syntax, j: number): number {
@@ -610,15 +666,15 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
     error: string;
 } | {
     matches: true;
-    parsedTokens: number;
-    tree: AbstractSyntaxTree,
+    tries: {
+        parsedTokens: number;
+        tree: AbstractSyntaxTree;
+    }[];
 } {
-    const tree: AbstractSyntaxTree = {
-        rule,
-        parsed: [],
-        children: [],
-    };
-    let maxI = -1;
+    const tries: {
+        parsedTokens: number;
+        tree: AbstractSyntaxTree;
+    }[] = [];
     let maxParsed = 0;
     let error = `No rule matches for ${rule}`;
 
@@ -643,18 +699,31 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
                 continue;
             }
 
-            if (rule === 'prefixexp' && (j === 0 || j === 1) && !reversed) { // prefixexp is left-recursive, also try to parse from the right
+            for (const t of matchingResult.tries) {
+                tries.push({
+                    parsedTokens: t.parsedTokens,
+                    tree: { type: rule, children: t.children }
+                });
+            }
+
+            if (((rule === 'functioncall') || (rule === 'prefixexp' && (j === 0 || j === 1))) && !reversed) { // prefixexp is left-recursive, also try to parse from the right
                 const reversedSymbols = [...symbols].reverse();
                 let _i = tokens.length - 1;
-                while (_i > i + matchingResult.parsedTokens) {
+                while (_i > i) {
                     const reversedMatchingResult = tokensMatchSymbols(reversedSymbols, [...tokens].reverse(), tokens.length - 1 - _i, [], true);
-                    if (reversedMatchingResult.matches && reversedMatchingResult.parsedTokens > matchingResult.parsedTokens && _i - reversedMatchingResult.parsedTokens + 1 === i) {
-                        const newI = i + reversedMatchingResult.parsedTokens;
-                        const parsed = reversedMatchingResult.parsed;
+                    if (reversedMatchingResult.matches) {
+                        for (const t of reversedMatchingResult.tries) {
+                            if (
+                                _i - t.parsedTokens + 1 !== i // must start at the same token
+                                || tries.filter(tr => tr.parsedTokens === t.parsedTokens).length > 0 // must not be a duplicate
+                            ) {
+                                continue;
+                            }
 
-                        if (newI > maxI) {
-                            maxI = newI;
-                            tree.parsed = parsed;
+                            tries.push({
+                                parsedTokens: t.parsedTokens,
+                                tree: { type: rule, children: t.children.reverse() }
+                            });
                             continue outer;
                         }
                     }
@@ -662,107 +731,119 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
                     _i--;
                 }
             }
-
-            const newI = i + matchingResult.parsedTokens;
-            const parsed = matchingResult.parsed;
-
-            if (newI > maxI) {
-                maxI = newI;
-                tree.parsed = parsed;
-            }
         } finally {
             stack.pop();
         }
     }
 
-    if (maxI === -1) {
+    if (tries.length === 0) {
         return { matches: false, parsedTokens: maxParsed, error };
     }
 
+    tries.sort((a, b) => b.parsedTokens - a.parsedTokens);
+
     if (reversed) {
-        tree.parsed.reverse();
+        tries.reverse();
+
+        for (const t of tries) {
+            if (t.tree.type === 'token') {
+                continue;
+            }
+
+            t.tree.children.reverse();
+        }
     }
 
-    for (const p of tree.parsed) {
-        if (reversed && p.children) {
-            p.children.reverse();
-        }
-
-        for (const c of p.children ?? []) {
-            tree.children.push(c);
-        }
-
-        p.children = [];
-    }
-
-    const parsedTokens = maxI - i;
-
-    return { matches: true, parsedTokens, tree };
+    return { matches: true, tries };
 }
 
 function fixOperatorPrecedence(tree: AbstractSyntaxTree): AbstractSyntaxTree {
-    if (tree.rule === 'exp' && tree.children.length === 3 && tree.children[1].rule === 'binop') {
+    if (tree.type === 'token') {
+        return tree;
+    }
+
+    if (tree.type === 'exp' && tree.children.length === 3 && tree.children[1].type === 'binop') {
         /**
          *       <binop>
          *      /       \
          * <lhs>        <rhs>
          */
         const lhs = tree.children[0];
-        const operator = tree.children[1].parsed[0];
+        const operator = tree.children[1].children[0];
         const rhs = tree.children[2];
 
-        if (lhs.rule === 'exp' && lhs.children.length === 3 && lhs.children[1].rule === 'binop') {
+        if (operator.type !== 'token') {
+            throw new Error(`Expected token, got ${operator.type}`);
+        }
+
+        if (lhs.type === 'exp' && lhs.children.length === 3 && lhs.children[1].type === 'binop') {
             /**
              *       <binop>
              *      /       \
              * <lhs>        <rhs>
              */
             const leftLhs = lhs.children[0];
-            const leftOperator = lhs.children[1].parsed[0];
+            const leftOperator = lhs.children[1].children[0];
             const leftRhs = lhs.children[2];
+
+            if (leftOperator.type !== 'token') {
+                throw new Error(`Expected token, got ${leftOperator.type}`);
+            }
 
             if (precedence(leftOperator.token!) < precedence(operator.token!)) {
                 tree.children[0] = leftRhs;
                 lhs.children[2] = tree;
                 tree = lhs;
             }
-        } else if (lhs.rule === 'exp' && lhs.children.length === 2 && lhs.children[0].rule === 'unop') {
+        } else if (lhs.type === 'exp' && lhs.children.length === 2 && lhs.children[0].type === 'unop') {
             /**
              *       <unop>
              *              \
              *              <rhs>
              */
-            const leftOperator = lhs.children[0].parsed[0];
+            const leftOperator = lhs.children[0].children[0];
             const leftRhs = lhs.children[1];
+
+            if (leftOperator.type !== 'token') {
+                throw new Error(`Expected token, got ${leftOperator.type}`);
+            }
 
             if (precedence(leftOperator.token!) < precedence(operator.token!)) {
                 tree.children[1] = leftRhs;
                 lhs.children[1] = tree;
                 tree = lhs;
             }
-        } else if (rhs.rule === 'exp' && rhs.children.length === 3 && rhs.children[1].rule === 'binop') {
+        } else if (rhs.type === 'exp' && rhs.children.length === 3 && rhs.children[1].type === 'binop') {
             /**
              *       <binop>
              *      /       \
              * <lhs>        <rhs>
              */
             const rightLhs = rhs.children[0];
-            const rightOperator = rhs.children[1].parsed[0];
+            const rightOperator = rhs.children[1].children[0];
             const rightRhs = rhs.children[2];
+
+            if (rightOperator.type !== 'token') {
+                throw new Error(`Expected token, got ${rightOperator.type}`);
+            }
 
             if (precedence(rightOperator.token!) < precedence(operator.token!)) {
                 tree.children[2] = rightLhs;
                 rhs.children[0] = tree;
                 tree = rhs;
             }
-        } else if (rhs.rule === 'exp' && rhs.children.length === 2 && rhs.children[0].rule === 'unop') {
+        } else if (rhs.type === 'exp' && rhs.children.length === 2 && rhs.children[0].type === 'unop') {
             /**
              *       <unop>
              *              \
              *              <rhs>
              */
-            const rightOperator = rhs.children[0].parsed[0];
+            const rightOperator = rhs.children[0].children[0];
             const rightRhs = rhs.children[1];
+
+            if (rightOperator.type !== 'token') {
+                throw new Error(`Expected token, got ${rightOperator.type}`);
+            }
 
             if (precedence(rightOperator.token!) < precedence(operator.token!)) {
                 tree.children[1] = rightRhs;
@@ -770,38 +851,50 @@ function fixOperatorPrecedence(tree: AbstractSyntaxTree): AbstractSyntaxTree {
                 tree = rhs;
             }
         }
-    } else if (tree.rule === 'exp' && tree.children.length === 2 && tree.children[0].rule === 'unop') {
+    } else if (tree.type === 'exp' && tree.children.length === 2 && tree.children[0].type === 'unop') {
         /**
          *       <unop>
          *              \
          *              <rhs>
          */
-        const operator = tree.children[0].parsed[0];
+        const operator = tree.children[0].children[0];
         const rhs = tree.children[1];
 
-        if (rhs.rule === 'exp' && rhs.children.length === 3 && rhs.children[1].rule === 'binop') {
+        if (operator.type !== 'token') {
+            throw new Error(`Expected token, got ${operator.type}`);
+        }
+
+        if (rhs.type === 'exp' && rhs.children.length === 3 && rhs.children[1].type === 'binop') {
             /**
              *       <binop>
              *      /       \
              * <lhs>        <rhs>
              */
             const rightLhs = rhs.children[0];
-            const rightOperator = rhs.children[1].parsed[0];
+            const rightOperator = rhs.children[1].children[0];
             const rightRhs = rhs.children[2];
+
+            if (rightOperator.type !== 'token') {
+                throw new Error(`Expected token, got ${rightOperator.type}`);
+            }
 
             if (precedence(rightOperator.token!) < precedence(operator.token!)) {
                 tree.children[2] = rightLhs;
                 rhs.children[0] = tree;
                 tree = rhs;
             }
-        } else if (rhs.rule === 'exp' && rhs.children.length === 2 && rhs.children[0].rule === 'unop') {
+        } else if (rhs.type === 'exp' && rhs.children.length === 2 && rhs.children[0].type === 'unop') {
             /**
              *       <unop>
              *              \
              *              <rhs>
              */
-            const rightOperator = rhs.children[0].parsed[0];
+            const rightOperator = rhs.children[0].children[0];
             const rightRhs = rhs.children[1];
+
+            if (rightOperator.type !== 'token') {
+                throw new Error(`Expected token, got ${rightOperator.type}`);
+            }
 
             if (precedence(rightOperator.token!) < precedence(operator.token!)) {
                 tree.children[1] = rightRhs;
@@ -821,12 +914,14 @@ function fixOperatorPrecedence(tree: AbstractSyntaxTree): AbstractSyntaxTree {
 export function parser(tokens: Token[]): {
     tree: AbstractSyntaxTree;
 } {
-    const parsed = ruleMatches('chunk', tokens);
+    const parsed = ruleMatches('chunk', tokens, 0, [], false);
     if (!parsed.matches) {
         throw new Error(parsed.error);
     }
 
-    fixOperatorPrecedence(parsed.tree);
+    for (const p of parsed.tries) {
+        p.tree = fixOperatorPrecedence(p.tree);
+    }
 
-    return parsed; // Check if the tokens are a valid chunk
+    return parsed.tries[0]; // Check if the tokens are a valid chunk
 }

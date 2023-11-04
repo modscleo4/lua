@@ -35,12 +35,12 @@ print 'Lua is life'
 --print(1*2+3)
 --a=1*2*3
 ---[[
-b = 1
-function c(a)
-    return a
+b = #'1'
+function c(printer)
+    return printer
 end
 --]]
-a = b + c(print or io.write)('marcoantoniorahalsacoman')
+a = b + (c(print or io.write)('marcoantoniorahalsacoman') or 0)
 --]]
 ---[[
 function factorial(n)
@@ -59,6 +59,34 @@ a = 1 * 2 + factorial(1)
 print(a)
 
 print(factorial(4))
+
+x = 10                    -- global variable
+do                        -- new block
+    local x = x           -- new 'x', with value 10
+    print(x)              --> 10
+    x = x + 1
+    do                    -- another block
+        local x = x + 1   -- another 'x'
+        print(x)          --> 12
+    end
+    print(x)              --> 11
+end
+print(x)                  --> 10  (the global one)
+print 'asasdasd'
+print {}
+---[[
+a = {}
+local x = 20
+for i = 1, 10 do
+    --l = function () end
+    local y = 0
+    a[i] = function ()
+        y = y + 1;
+        return x + y
+    end
+end
+print(print(a))
+--]]
 
 --[[
     print(

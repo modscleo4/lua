@@ -1,0 +1,3260 @@
+{
+  "type": "script",
+  "line": 1,
+  "column": 1,
+  "body": {
+    "parsedTokens": 167,
+    "tree": {
+      "type": "chunk",
+      "children": [
+        {
+          "type": "block",
+          "children": [
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "varlist",
+                  "children": [
+                    {
+                      "type": "var",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "identifier",
+                            "match": "b",
+                            "value": "b",
+                            "additional": null,
+                            "line": 38,
+                            "column": 1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "operator",
+                    "match": "=",
+                    "value": "=",
+                    "additional": null,
+                    "line": 38,
+                    "column": 3
+                  }
+                },
+                {
+                  "type": "explist",
+                  "children": [
+                    {
+                      "type": "exp",
+                      "children": [
+                        {
+                          "type": "unop",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "operator",
+                                "match": "#",
+                                "value": "#",
+                                "additional": null,
+                                "line": 38,
+                                "column": 5
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "exp",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "constant",
+                                "match": "'1'",
+                                "value": "1",
+                                "additional": "string",
+                                "line": 38,
+                                "column": 6
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "reserved",
+                    "match": "function",
+                    "value": "FUNCTION",
+                    "additional": null,
+                    "line": 39,
+                    "column": 1
+                  }
+                },
+                {
+                  "type": "funcname",
+                  "children": [
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "identifier",
+                        "match": "c",
+                        "value": "c",
+                        "additional": null,
+                        "line": 39,
+                        "column": 10
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "funcbody",
+                  "children": [
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "separator",
+                        "match": "(",
+                        "value": "(",
+                        "additional": null,
+                        "line": 39,
+                        "column": 11
+                      }
+                    },
+                    {
+                      "type": "parlist",
+                      "children": [
+                        {
+                          "type": "namelist",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "printer",
+                                "value": "printer",
+                                "additional": null,
+                                "line": 39,
+                                "column": 12
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "separator",
+                        "match": ")",
+                        "value": ")",
+                        "additional": null,
+                        "line": 39,
+                        "column": 19
+                      }
+                    },
+                    {
+                      "type": "block",
+                      "children": [
+                        {
+                          "type": "retstat",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "reserved",
+                                "match": "return",
+                                "value": "RETURN",
+                                "additional": null,
+                                "line": 40,
+                                "column": 5
+                              }
+                            },
+                            {
+                              "type": "explist",
+                              "children": [
+                                {
+                                  "type": "exp",
+                                  "children": [
+                                    {
+                                      "type": "prefixexp",
+                                      "children": [
+                                        {
+                                          "type": "var",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "identifier",
+                                                "match": "printer",
+                                                "value": "printer",
+                                                "additional": null,
+                                                "line": 40,
+                                                "column": 12
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "reserved",
+                        "match": "end",
+                        "value": "END",
+                        "additional": null,
+                        "line": 41,
+                        "column": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "varlist",
+                  "children": [
+                    {
+                      "type": "var",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "identifier",
+                            "match": "a",
+                            "value": "a",
+                            "additional": null,
+                            "line": 43,
+                            "column": 1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "operator",
+                    "match": "=",
+                    "value": "=",
+                    "additional": null,
+                    "line": 43,
+                    "column": 3
+                  }
+                },
+                {
+                  "type": "explist",
+                  "children": [
+                    {
+                      "type": "exp",
+                      "children": [
+                        {
+                          "type": "exp",
+                          "children": [
+                            {
+                              "type": "prefixexp",
+                              "children": [
+                                {
+                                  "type": "var",
+                                  "children": [
+                                    {
+                                      "type": "token",
+                                      "token": {
+                                        "type": "identifier",
+                                        "match": "b",
+                                        "value": "b",
+                                        "additional": null,
+                                        "line": 43,
+                                        "column": 5
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "binop",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "operator",
+                                "match": "+",
+                                "value": "+",
+                                "additional": null,
+                                "line": 43,
+                                "column": 7
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "exp",
+                          "children": [
+                            {
+                              "type": "prefixexp",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "separator",
+                                    "match": "(",
+                                    "value": "(",
+                                    "additional": null,
+                                    "line": 43,
+                                    "column": 9
+                                  }
+                                },
+                                {
+                                  "type": "exp",
+                                  "children": [
+                                    {
+                                      "type": "exp",
+                                      "children": [
+                                        {
+                                          "type": "prefixexp",
+                                          "children": [
+                                            {
+                                              "type": "functioncall",
+                                              "children": [
+                                                {
+                                                  "type": "prefixexp",
+                                                  "children": [
+                                                    {
+                                                      "type": "functioncall",
+                                                      "children": [
+                                                        {
+                                                          "type": "prefixexp",
+                                                          "children": [
+                                                            {
+                                                              "type": "var",
+                                                              "children": [
+                                                                {
+                                                                  "type": "token",
+                                                                  "token": {
+                                                                    "type": "identifier",
+                                                                    "match": "c",
+                                                                    "value": "c",
+                                                                    "additional": null,
+                                                                    "line": 43,
+                                                                    "column": 10
+                                                                  }
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "type": "args",
+                                                          "children": [
+                                                            {
+                                                              "type": "token",
+                                                              "token": {
+                                                                "type": "separator",
+                                                                "match": "(",
+                                                                "value": "(",
+                                                                "additional": null,
+                                                                "line": 43,
+                                                                "column": 11
+                                                              }
+                                                            },
+                                                            {
+                                                              "type": "explist",
+                                                              "children": [
+                                                                {
+                                                                  "type": "exp",
+                                                                  "children": [
+                                                                    {
+                                                                      "type": "exp",
+                                                                      "children": [
+                                                                        {
+                                                                          "type": "prefixexp",
+                                                                          "children": [
+                                                                            {
+                                                                              "type": "var",
+                                                                              "children": [
+                                                                                {
+                                                                                  "type": "token",
+                                                                                  "token": {
+                                                                                    "type": "identifier",
+                                                                                    "match": "print",
+                                                                                    "value": "print",
+                                                                                    "additional": null,
+                                                                                    "line": 43,
+                                                                                    "column": 12
+                                                                                  }
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    },
+                                                                    {
+                                                                      "type": "binop",
+                                                                      "children": [
+                                                                        {
+                                                                          "type": "token",
+                                                                          "token": {
+                                                                            "type": "reserved",
+                                                                            "match": "or",
+                                                                            "value": "OR",
+                                                                            "additional": null,
+                                                                            "line": 43,
+                                                                            "column": 18
+                                                                          }
+                                                                        }
+                                                                      ]
+                                                                    },
+                                                                    {
+                                                                      "type": "exp",
+                                                                      "children": [
+                                                                        {
+                                                                          "type": "prefixexp",
+                                                                          "children": [
+                                                                            {
+                                                                              "type": "var",
+                                                                              "children": [
+                                                                                {
+                                                                                  "type": "prefixexp",
+                                                                                  "children": [
+                                                                                    {
+                                                                                      "type": "var",
+                                                                                      "children": [
+                                                                                        {
+                                                                                          "type": "token",
+                                                                                          "token": {
+                                                                                            "type": "identifier",
+                                                                                            "match": "io",
+                                                                                            "value": "io",
+                                                                                            "additional": null,
+                                                                                            "line": 43,
+                                                                                            "column": 21
+                                                                                          }
+                                                                                        }
+                                                                                      ]
+                                                                                    }
+                                                                                  ]
+                                                                                },
+                                                                                {
+                                                                                  "type": "token",
+                                                                                  "token": {
+                                                                                    "type": "separator",
+                                                                                    "match": ".",
+                                                                                    "value": ".",
+                                                                                    "additional": null,
+                                                                                    "line": 43,
+                                                                                    "column": 23
+                                                                                  }
+                                                                                },
+                                                                                {
+                                                                                  "type": "token",
+                                                                                  "token": {
+                                                                                    "type": "identifier",
+                                                                                    "match": "write",
+                                                                                    "value": "write",
+                                                                                    "additional": null,
+                                                                                    "line": 43,
+                                                                                    "column": 24
+                                                                                  }
+                                                                                }
+                                                                              ]
+                                                                            }
+                                                                          ]
+                                                                        }
+                                                                      ]
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            },
+                                                            {
+                                                              "type": "token",
+                                                              "token": {
+                                                                "type": "separator",
+                                                                "match": ")",
+                                                                "value": ")",
+                                                                "additional": null,
+                                                                "line": 43,
+                                                                "column": 29
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "args",
+                                                  "children": [
+                                                    {
+                                                      "type": "token",
+                                                      "token": {
+                                                        "type": "separator",
+                                                        "match": "(",
+                                                        "value": "(",
+                                                        "additional": null,
+                                                        "line": 43,
+                                                        "column": 30
+                                                      }
+                                                    },
+                                                    {
+                                                      "type": "explist",
+                                                      "children": [
+                                                        {
+                                                          "type": "exp",
+                                                          "children": [
+                                                            {
+                                                              "type": "token",
+                                                              "token": {
+                                                                "type": "constant",
+                                                                "match": "'marcoantoniorahalsacoman'",
+                                                                "value": "marcoantoniorahalsacoman",
+                                                                "additional": "string",
+                                                                "line": 43,
+                                                                "column": 31
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    },
+                                                    {
+                                                      "type": "token",
+                                                      "token": {
+                                                        "type": "separator",
+                                                        "match": ")",
+                                                        "value": ")",
+                                                        "additional": null,
+                                                        "line": 43,
+                                                        "column": 57
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "binop",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "reserved",
+                                            "match": "or",
+                                            "value": "OR",
+                                            "additional": null,
+                                            "line": 43,
+                                            "column": 59
+                                          }
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "exp",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "constant",
+                                            "match": "0",
+                                            "value": "0",
+                                            "additional": "number",
+                                            "line": 43,
+                                            "column": 62
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "separator",
+                                    "match": ")",
+                                    "value": ")",
+                                    "additional": null,
+                                    "line": 43,
+                                    "column": 63
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "reserved",
+                    "match": "function",
+                    "value": "FUNCTION",
+                    "additional": null,
+                    "line": 46,
+                    "column": 1
+                  }
+                },
+                {
+                  "type": "funcname",
+                  "children": [
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "identifier",
+                        "match": "factorial",
+                        "value": "factorial",
+                        "additional": null,
+                        "line": 46,
+                        "column": 10
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "funcbody",
+                  "children": [
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "separator",
+                        "match": "(",
+                        "value": "(",
+                        "additional": null,
+                        "line": 46,
+                        "column": 19
+                      }
+                    },
+                    {
+                      "type": "parlist",
+                      "children": [
+                        {
+                          "type": "namelist",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "n",
+                                "value": "n",
+                                "additional": null,
+                                "line": 46,
+                                "column": 20
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "separator",
+                        "match": ")",
+                        "value": ")",
+                        "additional": null,
+                        "line": 46,
+                        "column": 21
+                      }
+                    },
+                    {
+                      "type": "block",
+                      "children": [
+                        {
+                          "type": "stat",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "reserved",
+                                "match": "local",
+                                "value": "LOCAL",
+                                "additional": null,
+                                "line": 47,
+                                "column": 3
+                              }
+                            },
+                            {
+                              "type": "attnamelist",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "identifier",
+                                    "match": "x",
+                                    "value": "x",
+                                    "additional": null,
+                                    "line": 47,
+                                    "column": 9
+                                  }
+                                },
+                                {
+                                  "type": "attrib",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "operator",
+                                "match": "=",
+                                "value": "=",
+                                "additional": null,
+                                "line": 47,
+                                "column": 11
+                              }
+                            },
+                            {
+                              "type": "explist",
+                              "children": [
+                                {
+                                  "type": "exp",
+                                  "children": [
+                                    {
+                                      "type": "token",
+                                      "token": {
+                                        "type": "constant",
+                                        "match": "1",
+                                        "value": "1",
+                                        "additional": "number",
+                                        "line": 47,
+                                        "column": 13
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "stat",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "reserved",
+                                "match": "for",
+                                "value": "FOR",
+                                "additional": null,
+                                "line": 48,
+                                "column": 3
+                              }
+                            },
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "i",
+                                "value": "i",
+                                "additional": null,
+                                "line": 48,
+                                "column": 7
+                              }
+                            },
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "operator",
+                                "match": "=",
+                                "value": "=",
+                                "additional": null,
+                                "line": 48,
+                                "column": 9
+                              }
+                            },
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "constant",
+                                    "match": "2",
+                                    "value": "2",
+                                    "additional": "number",
+                                    "line": 48,
+                                    "column": 11
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "separator",
+                                "match": ",",
+                                "value": ",",
+                                "additional": null,
+                                "line": 48,
+                                "column": 12
+                              }
+                            },
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "prefixexp",
+                                  "children": [
+                                    {
+                                      "type": "var",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "identifier",
+                                            "match": "n",
+                                            "value": "n",
+                                            "additional": null,
+                                            "line": 48,
+                                            "column": 14
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "reserved",
+                                "match": "do",
+                                "value": "DO",
+                                "additional": null,
+                                "line": 48,
+                                "column": 16
+                              }
+                            },
+                            {
+                              "type": "block",
+                              "children": [
+                                {
+                                  "type": "stat",
+                                  "children": [
+                                    {
+                                      "type": "varlist",
+                                      "children": [
+                                        {
+                                          "type": "var",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "identifier",
+                                                "match": "x",
+                                                "value": "x",
+                                                "additional": null,
+                                                "line": 49,
+                                                "column": 5
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "token",
+                                      "token": {
+                                        "type": "operator",
+                                        "match": "=",
+                                        "value": "=",
+                                        "additional": null,
+                                        "line": 49,
+                                        "column": 7
+                                      }
+                                    },
+                                    {
+                                      "type": "explist",
+                                      "children": [
+                                        {
+                                          "type": "exp",
+                                          "children": [
+                                            {
+                                              "type": "exp",
+                                              "children": [
+                                                {
+                                                  "type": "prefixexp",
+                                                  "children": [
+                                                    {
+                                                      "type": "var",
+                                                      "children": [
+                                                        {
+                                                          "type": "token",
+                                                          "token": {
+                                                            "type": "identifier",
+                                                            "match": "x",
+                                                            "value": "x",
+                                                            "additional": null,
+                                                            "line": 49,
+                                                            "column": 9
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "type": "binop",
+                                              "children": [
+                                                {
+                                                  "type": "token",
+                                                  "token": {
+                                                    "type": "operator",
+                                                    "match": "*",
+                                                    "value": "*",
+                                                    "additional": null,
+                                                    "line": 49,
+                                                    "column": 11
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "type": "exp",
+                                              "children": [
+                                                {
+                                                  "type": "prefixexp",
+                                                  "children": [
+                                                    {
+                                                      "type": "var",
+                                                      "children": [
+                                                        {
+                                                          "type": "token",
+                                                          "token": {
+                                                            "type": "identifier",
+                                                            "match": "i",
+                                                            "value": "i",
+                                                            "additional": null,
+                                                            "line": 49,
+                                                            "column": 13
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "reserved",
+                                "match": "end",
+                                "value": "END",
+                                "additional": null,
+                                "line": 50,
+                                "column": 3
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "retstat",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "reserved",
+                                "match": "return",
+                                "value": "RETURN",
+                                "additional": null,
+                                "line": 51,
+                                "column": 3
+                              }
+                            },
+                            {
+                              "type": "explist",
+                              "children": [
+                                {
+                                  "type": "exp",
+                                  "children": [
+                                    {
+                                      "type": "prefixexp",
+                                      "children": [
+                                        {
+                                          "type": "var",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "identifier",
+                                                "match": "x",
+                                                "value": "x",
+                                                "additional": null,
+                                                "line": 51,
+                                                "column": 10
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "reserved",
+                        "match": "end",
+                        "value": "END",
+                        "additional": null,
+                        "line": 52,
+                        "column": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "varlist",
+                  "children": [
+                    {
+                      "type": "var",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "identifier",
+                            "match": "a",
+                            "value": "a",
+                            "additional": null,
+                            "line": 58,
+                            "column": 1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "operator",
+                    "match": "=",
+                    "value": "=",
+                    "additional": null,
+                    "line": 58,
+                    "column": 3
+                  }
+                },
+                {
+                  "type": "explist",
+                  "children": [
+                    {
+                      "type": "exp",
+                      "children": [
+                        {
+                          "type": "exp",
+                          "children": [
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "constant",
+                                    "match": "1",
+                                    "value": "1",
+                                    "additional": "number",
+                                    "line": 58,
+                                    "column": 5
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "binop",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "operator",
+                                    "match": "*",
+                                    "value": "*",
+                                    "additional": null,
+                                    "line": 58,
+                                    "column": 7
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "constant",
+                                    "match": "2",
+                                    "value": "2",
+                                    "additional": "number",
+                                    "line": 58,
+                                    "column": 9
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "binop",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "operator",
+                                "match": "+",
+                                "value": "+",
+                                "additional": null,
+                                "line": 58,
+                                "column": 11
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "exp",
+                          "children": [
+                            {
+                              "type": "prefixexp",
+                              "children": [
+                                {
+                                  "type": "functioncall",
+                                  "children": [
+                                    {
+                                      "type": "prefixexp",
+                                      "children": [
+                                        {
+                                          "type": "var",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "identifier",
+                                                "match": "factorial",
+                                                "value": "factorial",
+                                                "additional": null,
+                                                "line": 58,
+                                                "column": 13
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "args",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "separator",
+                                            "match": "(",
+                                            "value": "(",
+                                            "additional": null,
+                                            "line": 58,
+                                            "column": 22
+                                          }
+                                        },
+                                        {
+                                          "type": "explist",
+                                          "children": [
+                                            {
+                                              "type": "exp",
+                                              "children": [
+                                                {
+                                                  "type": "token",
+                                                  "token": {
+                                                    "type": "constant",
+                                                    "match": "1",
+                                                    "value": "1",
+                                                    "additional": "number",
+                                                    "line": 58,
+                                                    "column": 23
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "separator",
+                                            "match": ")",
+                                            "value": ")",
+                                            "additional": null,
+                                            "line": 58,
+                                            "column": 24
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "functioncall",
+                  "children": [
+                    {
+                      "type": "prefixexp",
+                      "children": [
+                        {
+                          "type": "var",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "print",
+                                "value": "print",
+                                "additional": null,
+                                "line": 59,
+                                "column": 1
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "args",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "separator",
+                            "match": "(",
+                            "value": "(",
+                            "additional": null,
+                            "line": 59,
+                            "column": 6
+                          }
+                        },
+                        {
+                          "type": "explist",
+                          "children": [
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "prefixexp",
+                                  "children": [
+                                    {
+                                      "type": "var",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "identifier",
+                                            "match": "a",
+                                            "value": "a",
+                                            "additional": null,
+                                            "line": 59,
+                                            "column": 7
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "separator",
+                            "match": ")",
+                            "value": ")",
+                            "additional": null,
+                            "line": 59,
+                            "column": 8
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "functioncall",
+                  "children": [
+                    {
+                      "type": "prefixexp",
+                      "children": [
+                        {
+                          "type": "var",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "print",
+                                "value": "print",
+                                "additional": null,
+                                "line": 61,
+                                "column": 1
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "args",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "separator",
+                            "match": "(",
+                            "value": "(",
+                            "additional": null,
+                            "line": 61,
+                            "column": 6
+                          }
+                        },
+                        {
+                          "type": "explist",
+                          "children": [
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "prefixexp",
+                                  "children": [
+                                    {
+                                      "type": "functioncall",
+                                      "children": [
+                                        {
+                                          "type": "prefixexp",
+                                          "children": [
+                                            {
+                                              "type": "var",
+                                              "children": [
+                                                {
+                                                  "type": "token",
+                                                  "token": {
+                                                    "type": "identifier",
+                                                    "match": "factorial",
+                                                    "value": "factorial",
+                                                    "additional": null,
+                                                    "line": 61,
+                                                    "column": 7
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "args",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "separator",
+                                                "match": "(",
+                                                "value": "(",
+                                                "additional": null,
+                                                "line": 61,
+                                                "column": 16
+                                              }
+                                            },
+                                            {
+                                              "type": "explist",
+                                              "children": [
+                                                {
+                                                  "type": "exp",
+                                                  "children": [
+                                                    {
+                                                      "type": "token",
+                                                      "token": {
+                                                        "type": "constant",
+                                                        "match": "4",
+                                                        "value": "4",
+                                                        "additional": "number",
+                                                        "line": 61,
+                                                        "column": 17
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "separator",
+                                                "match": ")",
+                                                "value": ")",
+                                                "additional": null,
+                                                "line": 61,
+                                                "column": 18
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "separator",
+                            "match": ")",
+                            "value": ")",
+                            "additional": null,
+                            "line": 61,
+                            "column": 19
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "varlist",
+                  "children": [
+                    {
+                      "type": "var",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "identifier",
+                            "match": "x",
+                            "value": "x",
+                            "additional": null,
+                            "line": 63,
+                            "column": 1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "operator",
+                    "match": "=",
+                    "value": "=",
+                    "additional": null,
+                    "line": 63,
+                    "column": 3
+                  }
+                },
+                {
+                  "type": "explist",
+                  "children": [
+                    {
+                      "type": "exp",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "constant",
+                            "match": "10",
+                            "value": "10",
+                            "additional": "number",
+                            "line": 63,
+                            "column": 5
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "reserved",
+                    "match": "do",
+                    "value": "DO",
+                    "additional": null,
+                    "line": 64,
+                    "column": 1
+                  }
+                },
+                {
+                  "type": "block",
+                  "children": [
+                    {
+                      "type": "stat",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "reserved",
+                            "match": "local",
+                            "value": "LOCAL",
+                            "additional": null,
+                            "line": 65,
+                            "column": 5
+                          }
+                        },
+                        {
+                          "type": "attnamelist",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "x",
+                                "value": "x",
+                                "additional": null,
+                                "line": 65,
+                                "column": 11
+                              }
+                            },
+                            {
+                              "type": "attrib",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "operator",
+                            "match": "=",
+                            "value": "=",
+                            "additional": null,
+                            "line": 65,
+                            "column": 13
+                          }
+                        },
+                        {
+                          "type": "explist",
+                          "children": [
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "prefixexp",
+                                  "children": [
+                                    {
+                                      "type": "var",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "identifier",
+                                            "match": "x",
+                                            "value": "x",
+                                            "additional": null,
+                                            "line": 65,
+                                            "column": 15
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "stat",
+                      "children": [
+                        {
+                          "type": "functioncall",
+                          "children": [
+                            {
+                              "type": "prefixexp",
+                              "children": [
+                                {
+                                  "type": "var",
+                                  "children": [
+                                    {
+                                      "type": "token",
+                                      "token": {
+                                        "type": "identifier",
+                                        "match": "print",
+                                        "value": "print",
+                                        "additional": null,
+                                        "line": 66,
+                                        "column": 5
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "args",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "separator",
+                                    "match": "(",
+                                    "value": "(",
+                                    "additional": null,
+                                    "line": 66,
+                                    "column": 10
+                                  }
+                                },
+                                {
+                                  "type": "explist",
+                                  "children": [
+                                    {
+                                      "type": "exp",
+                                      "children": [
+                                        {
+                                          "type": "prefixexp",
+                                          "children": [
+                                            {
+                                              "type": "var",
+                                              "children": [
+                                                {
+                                                  "type": "token",
+                                                  "token": {
+                                                    "type": "identifier",
+                                                    "match": "x",
+                                                    "value": "x",
+                                                    "additional": null,
+                                                    "line": 66,
+                                                    "column": 11
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "separator",
+                                    "match": ")",
+                                    "value": ")",
+                                    "additional": null,
+                                    "line": 66,
+                                    "column": 12
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "stat",
+                      "children": [
+                        {
+                          "type": "varlist",
+                          "children": [
+                            {
+                              "type": "var",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "identifier",
+                                    "match": "x",
+                                    "value": "x",
+                                    "additional": null,
+                                    "line": 67,
+                                    "column": 5
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "operator",
+                            "match": "=",
+                            "value": "=",
+                            "additional": null,
+                            "line": 67,
+                            "column": 7
+                          }
+                        },
+                        {
+                          "type": "explist",
+                          "children": [
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "exp",
+                                  "children": [
+                                    {
+                                      "type": "prefixexp",
+                                      "children": [
+                                        {
+                                          "type": "var",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "identifier",
+                                                "match": "x",
+                                                "value": "x",
+                                                "additional": null,
+                                                "line": 67,
+                                                "column": 9
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "binop",
+                                  "children": [
+                                    {
+                                      "type": "token",
+                                      "token": {
+                                        "type": "operator",
+                                        "match": "+",
+                                        "value": "+",
+                                        "additional": null,
+                                        "line": 67,
+                                        "column": 11
+                                      }
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "exp",
+                                  "children": [
+                                    {
+                                      "type": "token",
+                                      "token": {
+                                        "type": "constant",
+                                        "match": "1",
+                                        "value": "1",
+                                        "additional": "number",
+                                        "line": 67,
+                                        "column": 13
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "stat",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "reserved",
+                            "match": "do",
+                            "value": "DO",
+                            "additional": null,
+                            "line": 68,
+                            "column": 5
+                          }
+                        },
+                        {
+                          "type": "block",
+                          "children": [
+                            {
+                              "type": "stat",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "reserved",
+                                    "match": "local",
+                                    "value": "LOCAL",
+                                    "additional": null,
+                                    "line": 69,
+                                    "column": 9
+                                  }
+                                },
+                                {
+                                  "type": "attnamelist",
+                                  "children": [
+                                    {
+                                      "type": "token",
+                                      "token": {
+                                        "type": "identifier",
+                                        "match": "x",
+                                        "value": "x",
+                                        "additional": null,
+                                        "line": 69,
+                                        "column": 15
+                                      }
+                                    },
+                                    {
+                                      "type": "attrib",
+                                      "children": []
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "operator",
+                                    "match": "=",
+                                    "value": "=",
+                                    "additional": null,
+                                    "line": 69,
+                                    "column": 17
+                                  }
+                                },
+                                {
+                                  "type": "explist",
+                                  "children": [
+                                    {
+                                      "type": "exp",
+                                      "children": [
+                                        {
+                                          "type": "exp",
+                                          "children": [
+                                            {
+                                              "type": "prefixexp",
+                                              "children": [
+                                                {
+                                                  "type": "var",
+                                                  "children": [
+                                                    {
+                                                      "type": "token",
+                                                      "token": {
+                                                        "type": "identifier",
+                                                        "match": "x",
+                                                        "value": "x",
+                                                        "additional": null,
+                                                        "line": 69,
+                                                        "column": 19
+                                                      }
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "binop",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "operator",
+                                                "match": "+",
+                                                "value": "+",
+                                                "additional": null,
+                                                "line": 69,
+                                                "column": 21
+                                              }
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "exp",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "constant",
+                                                "match": "1",
+                                                "value": "1",
+                                                "additional": "number",
+                                                "line": 69,
+                                                "column": 23
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "stat",
+                              "children": [
+                                {
+                                  "type": "functioncall",
+                                  "children": [
+                                    {
+                                      "type": "prefixexp",
+                                      "children": [
+                                        {
+                                          "type": "var",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "identifier",
+                                                "match": "print",
+                                                "value": "print",
+                                                "additional": null,
+                                                "line": 70,
+                                                "column": 9
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "args",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "separator",
+                                            "match": "(",
+                                            "value": "(",
+                                            "additional": null,
+                                            "line": 70,
+                                            "column": 14
+                                          }
+                                        },
+                                        {
+                                          "type": "explist",
+                                          "children": [
+                                            {
+                                              "type": "exp",
+                                              "children": [
+                                                {
+                                                  "type": "prefixexp",
+                                                  "children": [
+                                                    {
+                                                      "type": "var",
+                                                      "children": [
+                                                        {
+                                                          "type": "token",
+                                                          "token": {
+                                                            "type": "identifier",
+                                                            "match": "x",
+                                                            "value": "x",
+                                                            "additional": null,
+                                                            "line": 70,
+                                                            "column": 15
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "separator",
+                                            "match": ")",
+                                            "value": ")",
+                                            "additional": null,
+                                            "line": 70,
+                                            "column": 16
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "reserved",
+                            "match": "end",
+                            "value": "END",
+                            "additional": null,
+                            "line": 71,
+                            "column": 5
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "stat",
+                      "children": [
+                        {
+                          "type": "functioncall",
+                          "children": [
+                            {
+                              "type": "prefixexp",
+                              "children": [
+                                {
+                                  "type": "var",
+                                  "children": [
+                                    {
+                                      "type": "token",
+                                      "token": {
+                                        "type": "identifier",
+                                        "match": "print",
+                                        "value": "print",
+                                        "additional": null,
+                                        "line": 72,
+                                        "column": 5
+                                      }
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "args",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "separator",
+                                    "match": "(",
+                                    "value": "(",
+                                    "additional": null,
+                                    "line": 72,
+                                    "column": 10
+                                  }
+                                },
+                                {
+                                  "type": "explist",
+                                  "children": [
+                                    {
+                                      "type": "exp",
+                                      "children": [
+                                        {
+                                          "type": "prefixexp",
+                                          "children": [
+                                            {
+                                              "type": "var",
+                                              "children": [
+                                                {
+                                                  "type": "token",
+                                                  "token": {
+                                                    "type": "identifier",
+                                                    "match": "x",
+                                                    "value": "x",
+                                                    "additional": null,
+                                                    "line": 72,
+                                                    "column": 11
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "separator",
+                                    "match": ")",
+                                    "value": ")",
+                                    "additional": null,
+                                    "line": 72,
+                                    "column": 12
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "reserved",
+                    "match": "end",
+                    "value": "END",
+                    "additional": null,
+                    "line": 73,
+                    "column": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "functioncall",
+                  "children": [
+                    {
+                      "type": "prefixexp",
+                      "children": [
+                        {
+                          "type": "var",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "print",
+                                "value": "print",
+                                "additional": null,
+                                "line": 74,
+                                "column": 1
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "args",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "separator",
+                            "match": "(",
+                            "value": "(",
+                            "additional": null,
+                            "line": 74,
+                            "column": 6
+                          }
+                        },
+                        {
+                          "type": "explist",
+                          "children": [
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "prefixexp",
+                                  "children": [
+                                    {
+                                      "type": "var",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "identifier",
+                                            "match": "x",
+                                            "value": "x",
+                                            "additional": null,
+                                            "line": 74,
+                                            "column": 7
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "separator",
+                            "match": ")",
+                            "value": ")",
+                            "additional": null,
+                            "line": 74,
+                            "column": 8
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "functioncall",
+                  "children": [
+                    {
+                      "type": "prefixexp",
+                      "children": [
+                        {
+                          "type": "var",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "print",
+                                "value": "print",
+                                "additional": null,
+                                "line": 75,
+                                "column": 1
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "args",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "constant",
+                            "match": "'asasdasd'",
+                            "value": "asasdasd",
+                            "additional": "string",
+                            "line": 75,
+                            "column": 7
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "functioncall",
+                  "children": [
+                    {
+                      "type": "prefixexp",
+                      "children": [
+                        {
+                          "type": "var",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "print",
+                                "value": "print",
+                                "additional": null,
+                                "line": 76,
+                                "column": 1
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "args",
+                      "children": [
+                        {
+                          "type": "tableconstructor",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "separator",
+                                "match": "{",
+                                "value": "{",
+                                "additional": null,
+                                "line": 76,
+                                "column": 7
+                              }
+                            },
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "separator",
+                                "match": "}",
+                                "value": "}",
+                                "additional": null,
+                                "line": 76,
+                                "column": 8
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "varlist",
+                  "children": [
+                    {
+                      "type": "var",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "identifier",
+                            "match": "a",
+                            "value": "a",
+                            "additional": null,
+                            "line": 78,
+                            "column": 1
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "operator",
+                    "match": "=",
+                    "value": "=",
+                    "additional": null,
+                    "line": 78,
+                    "column": 3
+                  }
+                },
+                {
+                  "type": "explist",
+                  "children": [
+                    {
+                      "type": "exp",
+                      "children": [
+                        {
+                          "type": "tableconstructor",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "separator",
+                                "match": "{",
+                                "value": "{",
+                                "additional": null,
+                                "line": 78,
+                                "column": 5
+                              }
+                            },
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "separator",
+                                "match": "}",
+                                "value": "}",
+                                "additional": null,
+                                "line": 78,
+                                "column": 6
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "reserved",
+                    "match": "local",
+                    "value": "LOCAL",
+                    "additional": null,
+                    "line": 79,
+                    "column": 1
+                  }
+                },
+                {
+                  "type": "attnamelist",
+                  "children": [
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "identifier",
+                        "match": "x",
+                        "value": "x",
+                        "additional": null,
+                        "line": 79,
+                        "column": 7
+                      }
+                    },
+                    {
+                      "type": "attrib",
+                      "children": []
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "operator",
+                    "match": "=",
+                    "value": "=",
+                    "additional": null,
+                    "line": 79,
+                    "column": 9
+                  }
+                },
+                {
+                  "type": "explist",
+                  "children": [
+                    {
+                      "type": "exp",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "constant",
+                            "match": "20",
+                            "value": "20",
+                            "additional": "number",
+                            "line": 79,
+                            "column": 11
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "reserved",
+                    "match": "for",
+                    "value": "FOR",
+                    "additional": null,
+                    "line": 80,
+                    "column": 1
+                  }
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "identifier",
+                    "match": "i",
+                    "value": "i",
+                    "additional": null,
+                    "line": 80,
+                    "column": 5
+                  }
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "operator",
+                    "match": "=",
+                    "value": "=",
+                    "additional": null,
+                    "line": 80,
+                    "column": 7
+                  }
+                },
+                {
+                  "type": "exp",
+                  "children": [
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "constant",
+                        "match": "1",
+                        "value": "1",
+                        "additional": "number",
+                        "line": 80,
+                        "column": 9
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "separator",
+                    "match": ",",
+                    "value": ",",
+                    "additional": null,
+                    "line": 80,
+                    "column": 10
+                  }
+                },
+                {
+                  "type": "exp",
+                  "children": [
+                    {
+                      "type": "token",
+                      "token": {
+                        "type": "constant",
+                        "match": "10",
+                        "value": "10",
+                        "additional": "number",
+                        "line": 80,
+                        "column": 12
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "reserved",
+                    "match": "do",
+                    "value": "DO",
+                    "additional": null,
+                    "line": 80,
+                    "column": 15
+                  }
+                },
+                {
+                  "type": "block",
+                  "children": [
+                    {
+                      "type": "stat",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "reserved",
+                            "match": "local",
+                            "value": "LOCAL",
+                            "additional": null,
+                            "line": 82,
+                            "column": 5
+                          }
+                        },
+                        {
+                          "type": "attnamelist",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "y",
+                                "value": "y",
+                                "additional": null,
+                                "line": 82,
+                                "column": 11
+                              }
+                            },
+                            {
+                              "type": "attrib",
+                              "children": []
+                            }
+                          ]
+                        },
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "operator",
+                            "match": "=",
+                            "value": "=",
+                            "additional": null,
+                            "line": 82,
+                            "column": 13
+                          }
+                        },
+                        {
+                          "type": "explist",
+                          "children": [
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "constant",
+                                    "match": "0",
+                                    "value": "0",
+                                    "additional": "number",
+                                    "line": 82,
+                                    "column": 15
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "stat",
+                      "children": [
+                        {
+                          "type": "varlist",
+                          "children": [
+                            {
+                              "type": "var",
+                              "children": [
+                                {
+                                  "type": "prefixexp",
+                                  "children": [
+                                    {
+                                      "type": "var",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "identifier",
+                                            "match": "a",
+                                            "value": "a",
+                                            "additional": null,
+                                            "line": 83,
+                                            "column": 5
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "separator",
+                                    "match": "[",
+                                    "value": "[",
+                                    "additional": null,
+                                    "line": 83,
+                                    "column": 6
+                                  }
+                                },
+                                {
+                                  "type": "exp",
+                                  "children": [
+                                    {
+                                      "type": "prefixexp",
+                                      "children": [
+                                        {
+                                          "type": "var",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "identifier",
+                                                "match": "i",
+                                                "value": "i",
+                                                "additional": null,
+                                                "line": 83,
+                                                "column": 7
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                },
+                                {
+                                  "type": "token",
+                                  "token": {
+                                    "type": "separator",
+                                    "match": "]",
+                                    "value": "]",
+                                    "additional": null,
+                                    "line": 83,
+                                    "column": 8
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "operator",
+                            "match": "=",
+                            "value": "=",
+                            "additional": null,
+                            "line": 83,
+                            "column": 10
+                          }
+                        },
+                        {
+                          "type": "explist",
+                          "children": [
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "functiondef",
+                                  "children": [
+                                    {
+                                      "type": "token",
+                                      "token": {
+                                        "type": "reserved",
+                                        "match": "function",
+                                        "value": "FUNCTION",
+                                        "additional": null,
+                                        "line": 83,
+                                        "column": 12
+                                      }
+                                    },
+                                    {
+                                      "type": "funcbody",
+                                      "children": [
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "separator",
+                                            "match": "(",
+                                            "value": "(",
+                                            "additional": null,
+                                            "line": 83,
+                                            "column": 21
+                                          }
+                                        },
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "separator",
+                                            "match": ")",
+                                            "value": ")",
+                                            "additional": null,
+                                            "line": 83,
+                                            "column": 22
+                                          }
+                                        },
+                                        {
+                                          "type": "block",
+                                          "children": [
+                                            {
+                                              "type": "stat",
+                                              "children": [
+                                                {
+                                                  "type": "varlist",
+                                                  "children": [
+                                                    {
+                                                      "type": "var",
+                                                      "children": [
+                                                        {
+                                                          "type": "token",
+                                                          "token": {
+                                                            "type": "identifier",
+                                                            "match": "y",
+                                                            "value": "y",
+                                                            "additional": null,
+                                                            "line": 84,
+                                                            "column": 9
+                                                          }
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "token",
+                                                  "token": {
+                                                    "type": "operator",
+                                                    "match": "=",
+                                                    "value": "=",
+                                                    "additional": null,
+                                                    "line": 84,
+                                                    "column": 11
+                                                  }
+                                                },
+                                                {
+                                                  "type": "explist",
+                                                  "children": [
+                                                    {
+                                                      "type": "exp",
+                                                      "children": [
+                                                        {
+                                                          "type": "exp",
+                                                          "children": [
+                                                            {
+                                                              "type": "prefixexp",
+                                                              "children": [
+                                                                {
+                                                                  "type": "var",
+                                                                  "children": [
+                                                                    {
+                                                                      "type": "token",
+                                                                      "token": {
+                                                                        "type": "identifier",
+                                                                        "match": "y",
+                                                                        "value": "y",
+                                                                        "additional": null,
+                                                                        "line": 84,
+                                                                        "column": 13
+                                                                      }
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "type": "binop",
+                                                          "children": [
+                                                            {
+                                                              "type": "token",
+                                                              "token": {
+                                                                "type": "operator",
+                                                                "match": "+",
+                                                                "value": "+",
+                                                                "additional": null,
+                                                                "line": 84,
+                                                                "column": 15
+                                                              }
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "type": "exp",
+                                                          "children": [
+                                                            {
+                                                              "type": "token",
+                                                              "token": {
+                                                                "type": "constant",
+                                                                "match": "1",
+                                                                "value": "1",
+                                                                "additional": "number",
+                                                                "line": 84,
+                                                                "column": 17
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "type": "stat",
+                                              "children": [
+                                                {
+                                                  "type": "token",
+                                                  "token": {
+                                                    "type": "separator",
+                                                    "match": ";",
+                                                    "value": ";",
+                                                    "additional": null,
+                                                    "line": 84,
+                                                    "column": 18
+                                                  }
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "type": "retstat",
+                                              "children": [
+                                                {
+                                                  "type": "token",
+                                                  "token": {
+                                                    "type": "reserved",
+                                                    "match": "return",
+                                                    "value": "RETURN",
+                                                    "additional": null,
+                                                    "line": 85,
+                                                    "column": 9
+                                                  }
+                                                },
+                                                {
+                                                  "type": "explist",
+                                                  "children": [
+                                                    {
+                                                      "type": "exp",
+                                                      "children": [
+                                                        {
+                                                          "type": "exp",
+                                                          "children": [
+                                                            {
+                                                              "type": "prefixexp",
+                                                              "children": [
+                                                                {
+                                                                  "type": "var",
+                                                                  "children": [
+                                                                    {
+                                                                      "type": "token",
+                                                                      "token": {
+                                                                        "type": "identifier",
+                                                                        "match": "x",
+                                                                        "value": "x",
+                                                                        "additional": null,
+                                                                        "line": 85,
+                                                                        "column": 16
+                                                                      }
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "type": "binop",
+                                                          "children": [
+                                                            {
+                                                              "type": "token",
+                                                              "token": {
+                                                                "type": "operator",
+                                                                "match": "+",
+                                                                "value": "+",
+                                                                "additional": null,
+                                                                "line": 85,
+                                                                "column": 18
+                                                              }
+                                                            }
+                                                          ]
+                                                        },
+                                                        {
+                                                          "type": "exp",
+                                                          "children": [
+                                                            {
+                                                              "type": "prefixexp",
+                                                              "children": [
+                                                                {
+                                                                  "type": "var",
+                                                                  "children": [
+                                                                    {
+                                                                      "type": "token",
+                                                                      "token": {
+                                                                        "type": "identifier",
+                                                                        "match": "y",
+                                                                        "value": "y",
+                                                                        "additional": null,
+                                                                        "line": 85,
+                                                                        "column": 20
+                                                                      }
+                                                                    }
+                                                                  ]
+                                                                }
+                                                              ]
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "token",
+                                          "token": {
+                                            "type": "reserved",
+                                            "match": "end",
+                                            "value": "END",
+                                            "additional": null,
+                                            "line": 86,
+                                            "column": 5
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "token",
+                  "token": {
+                    "type": "reserved",
+                    "match": "end",
+                    "value": "END",
+                    "additional": null,
+                    "line": 87,
+                    "column": 1
+                  }
+                }
+              ]
+            },
+            {
+              "type": "stat",
+              "children": [
+                {
+                  "type": "functioncall",
+                  "children": [
+                    {
+                      "type": "prefixexp",
+                      "children": [
+                        {
+                          "type": "var",
+                          "children": [
+                            {
+                              "type": "token",
+                              "token": {
+                                "type": "identifier",
+                                "match": "print",
+                                "value": "print",
+                                "additional": null,
+                                "line": 88,
+                                "column": 1
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "args",
+                      "children": [
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "separator",
+                            "match": "(",
+                            "value": "(",
+                            "additional": null,
+                            "line": 88,
+                            "column": 6
+                          }
+                        },
+                        {
+                          "type": "explist",
+                          "children": [
+                            {
+                              "type": "exp",
+                              "children": [
+                                {
+                                  "type": "prefixexp",
+                                  "children": [
+                                    {
+                                      "type": "functioncall",
+                                      "children": [
+                                        {
+                                          "type": "prefixexp",
+                                          "children": [
+                                            {
+                                              "type": "var",
+                                              "children": [
+                                                {
+                                                  "type": "token",
+                                                  "token": {
+                                                    "type": "identifier",
+                                                    "match": "print",
+                                                    "value": "print",
+                                                    "additional": null,
+                                                    "line": 88,
+                                                    "column": 7
+                                                  }
+                                                }
+                                              ]
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "args",
+                                          "children": [
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "separator",
+                                                "match": "(",
+                                                "value": "(",
+                                                "additional": null,
+                                                "line": 88,
+                                                "column": 12
+                                              }
+                                            },
+                                            {
+                                              "type": "explist",
+                                              "children": [
+                                                {
+                                                  "type": "exp",
+                                                  "children": [
+                                                    {
+                                                      "type": "prefixexp",
+                                                      "children": [
+                                                        {
+                                                          "type": "var",
+                                                          "children": [
+                                                            {
+                                                              "type": "token",
+                                                              "token": {
+                                                                "type": "identifier",
+                                                                "match": "a",
+                                                                "value": "a",
+                                                                "additional": null,
+                                                                "line": 88,
+                                                                "column": 13
+                                                              }
+                                                            }
+                                                          ]
+                                                        }
+                                                      ]
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "type": "token",
+                                              "token": {
+                                                "type": "separator",
+                                                "match": ")",
+                                                "value": ")",
+                                                "additional": null,
+                                                "line": 88,
+                                                "column": 14
+                                              }
+                                            }
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "token",
+                          "token": {
+                            "type": "separator",
+                            "match": ")",
+                            "value": ")",
+                            "additional": null,
+                            "line": 88,
+                            "column": 15
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "token",
+          "token": {
+            "type": "EOF",
+            "match": "",
+            "value": "EOF",
+            "additional": null,
+            "line": 115,
+            "column": 0
+          }
+        }
+      ]
+    }
+  }
+}

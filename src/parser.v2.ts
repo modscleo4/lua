@@ -2,6 +2,21 @@
 
 import { Token } from "./tokenizer.js";
 
+type ChunkTree = {
+    type: 'chunk';
+    children: [BlockTree];
+};
+
+type BlockTree = {
+    type: 'block';
+    children: StatTree[];
+};
+
+type StatTree = {
+    type: 'stat';
+    children: [];
+};
+
 class Parser {
     #tokens: Token[] = [];
     #index = 0;
@@ -43,13 +58,13 @@ class Parser {
     stat() {
         this.expect({ type: 'identifier' });
         this.expect({ type: 'separator', additional: 'equals' });
-        this.expression();
+        //this.expression();
     }
 
     retstat() {
         this.expect({ type: 'reserved', value: 'return' });
         try {
-            this.expression();
+            //this.expression();
         } catch (e) {
             //
         }
