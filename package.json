@@ -2,12 +2,12 @@
   "name": "lua",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/lua.js",
+  "main": "dist/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "tsc -w",
-    "start": "node ."
+    "start": "node . test.lua"
   },
   "keywords": [],
   "author": "",

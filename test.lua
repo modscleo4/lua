@@ -2,13 +2,13 @@
 fsddsfsdfsdfsf
 --]===]
 
---[[
+---[[
 print 'Lua is love'
 --[=[]]
 --print 'Lua is life'
 --]=]
 
----[[
+--[[
 --print 'Lua is love'
 --[=[]]
 print 'Lua is life'
@@ -45,7 +45,7 @@ a = b + (c(print or io.write)('marcoantoniorahalsacoman') or 0)
 ---[[
 function factorial(n)
   local x = 1
-  for i = 2, n do
+  for i = 2, n, 1 do
     x = x * i
   end
   return x
@@ -86,6 +86,15 @@ for i = 1, 10 do
     end
 end
 print(print(a))
+if a[1] then
+    print(a[1]())
+    print(a[2]())
+end
+
+repeat
+    local a = true
+    print('a')
+until a
 --]]
 
 --[[

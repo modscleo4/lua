@@ -16,116 +16,28 @@
  * @author Dhiego Cassiano Fogaça Barbosa <modscleo4@outlook.com>
  */
 
-import { AbstractSyntaxTree, Terminal } from "./parser.js";
+import { AbstractSyntaxTree } from "./parser.js";
 import { Token } from "./tokenizer.js";
 
-export enum LuaType {
-    Nil = 'nil',
-    Boolean = 'boolean',
-    Number = 'number',
-    String = 'string',
-    Table = 'table',
-    Function = 'function',
-    Userdata = 'userdata',
-    Thread = 'thread',
-}
-
-type LuaNil = {
-    type: LuaType.Nil;
-    jsValue: null;
-};
-
-type LuaBoolean = {
-    type: LuaType.Boolean;
-    jsValue: boolean;
-};
-
-type LuaNumber = {
-    type: LuaType.Number;
-    jsValue: number;
-};
-
-type LuaString = {
-    type: LuaType.String;
-    jsValue: string;
-};
-
-type LuaTable = {
-    type: LuaType.Table;
-    jsValue: LuaScope;
-};
-
-type LuaFunction = {
-    type: LuaType.Function;
-    name?: string;
-    arguments: string[];
-    jsValue: LuaFunctionWrapper;
-};
-
-type LuaUserdata = {
-    type: LuaType.Userdata;
-    jsValue: unknown;
-};
-
-type LuaThread = {
-    type: LuaType.Thread;
-    jsValue: unknown;
-};
-
-export type LuaScope = Map<LuaValue, LuaValue>;
-
-export type LuaValue = LuaNil | LuaBoolean | LuaNumber | LuaString | LuaTable | LuaFunction | LuaUserdata | LuaThread;
-
-export type LuaFunctionWrapper = (globalScope: LuaScope, args: LuaScope) => LuaValue;
-
-const luaValueCache: Map<any, LuaValue> = new Map();
-
-export function convertToLuaValue(value: null): LuaNil;
-export function convertToLuaValue(value: boolean): LuaBoolean;
-export function convertToLuaValue(value: number): LuaNumber;
-export function convertToLuaValue(value: string): LuaString;
-export function convertToLuaValue(value: LuaScope): LuaTable;
-export function convertToLuaValue(value: LuaFunctionWrapper): LuaFunction;
-export function convertToLuaValue(value: unknown): LuaUserdata;
-export function convertToLuaValue(value: unknown): LuaThread;
-export function convertToLuaValue(value: any): LuaValue {
-    if (value === null) {
-        return { type: LuaType.Nil, jsValue: null };
-    } else if (typeof value === 'boolean') {
-        return { type: LuaType.Boolean, jsValue: value };
-    } else if (typeof value === 'number') {
-        return { type: LuaType.Number, jsValue: value };
-    } else if (typeof value === 'string') {
-        return { type: LuaType.String, jsValue: value };
-    } else if (typeof value === 'function') {
-        return { type: LuaType.Function, arguments: [], jsValue: value };
-    } else if (value instanceof Map) {
-        return { type: LuaType.Table, jsValue: value };
-    }
-
-    return { type: LuaType.Nil, jsValue: null };
-}
-
-export function toLuaValue(value: null): LuaNil;
-export function toLuaValue(value: boolean): LuaBoolean;
-export function toLuaValue(value: number): LuaNumber;
-export function toLuaValue(value: string): LuaString;
-export function toLuaValue(value: LuaScope): LuaTable;
-export function toLuaValue(value: LuaFunctionWrapper): LuaFunction;
-export function toLuaValue(value: unknown): LuaUserdata;
-export function toLuaValue(value: unknown): LuaThread;
-export function toLuaValue(value: any) {
-    if (luaValueCache.has(value)) {
-        return luaValueCache.get(value)!;
-    }
-
-    const luaValue = convertToLuaValue(value);
-    luaValueCache.set(value, luaValue);
-    return luaValue;
-}
+import {
+    LuaType,
+    LuaNil,
+    LuaBoolean,
+    LuaNumber,
+    LuaString,
+    LuaTable,
+    LuaFunction,
+    LuaUserdata,
+    LuaThread,
+    LuaScope,
+    LuaValue,
+    LuaFunctionWrapper,
+    convertToLuaValue,
+    toLuaValue,
+} from "./vm.js";
 
 function isFalsyLuaValue(value: LuaValue): boolean {
-    return value.type === LuaType.Nil || value.type === LuaType.Boolean && value.jsValue === false;
+    return value.type === LuaType.Nil || (value.type === LuaType.Boolean && value.jsValue === false);
 }
 
 function isTruthyLuaValue(value: LuaValue): boolean {
@@ -158,10 +70,9 @@ function parseParameterList(parlist: AbstractSyntaxTree): string[] {
     }
 
     return params;
-
 }
 
-function parseFunctionBody(name: string | undefined, funcbody: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function parseFunctionBody(name: string | undefined, funcbody: AbstractSyntaxTree, scope: LuaScope): LuaValue {
     if (funcbody.type !== 'funcbody') {
         throw new Error(`Expected a functionbody, got ${funcbody.type}`);
     }
@@ -170,19 +81,20 @@ function parseFunctionBody(name: string | undefined, funcbody: AbstractSyntaxTre
 
     const block = funcbody.children[2 + args.length];
 
-    const luaFunction = toLuaValue(function (globalScope: LuaScope, args: LuaScope) { return runBlock(block, globalScope, args); });
+    const luaFunction: LuaFunction = toLuaValue(function (scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) { const fnLocalScope = new LuaScope(scope); for (const [k, v] of args) { fnLocalScope.set(toLuaValue(k), v); } return runBlock(block, fnLocalScope); });
     luaFunction.name = name;
     luaFunction.arguments = args;
+    luaFunction.scope = new LuaScope(scope);
 
     return luaFunction;
 }
 
-function defineFunction(functiondef: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function defineFunction(functiondef: AbstractSyntaxTree, scope: LuaScope): LuaValue {
     if (functiondef.type !== 'functiondef') {
         throw new Error(`Expected a functiondef, got ${functiondef.type}`);
     }
 
-    return parseFunctionBody(undefined, functiondef.children[1], globalScope, localScope);
+    return parseFunctionBody(undefined, functiondef.children[1], scope);
 }
 
 function retrieveFunctionName(funcname: AbstractSyntaxTree): string {
@@ -200,18 +112,35 @@ function retrieveFunctionName(funcname: AbstractSyntaxTree): string {
     return name;
 }
 
-function defineNamedFunction(funcname: AbstractSyntaxTree, funcbody: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function defineNamedFunction(funcname: AbstractSyntaxTree, funcbody: AbstractSyntaxTree, scope: LuaScope): LuaValue {
     const name = retrieveFunctionName(funcname);
     debug(`Defining function '${name}'`);
-    const func = parseFunctionBody(name, funcbody, globalScope, localScope);
+    const func = parseFunctionBody(name, funcbody, scope);
 
-    globalScope.set(toLuaValue(name), func);
+    let globalScope = scope;
+    while (globalScope.parent) {
+        globalScope = globalScope.parent;
+    }
+
+    scope.set(toLuaValue(name), func);
 
     return func;
 }
 
-function constructTable(tableconstructor: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function constructTable(tableconstructor: AbstractSyntaxTree, scope: LuaScope): LuaValue {
+    if (tableconstructor.type !== 'tableconstructor') {
+        throw new Error(`Expected a tableconstructor, got ${tableconstructor.type}`);
+    }
+
     const table: Map<LuaValue, LuaValue> = new Map();
+    if (tableconstructor.children.length === 2) {
+        return toLuaValue(table);
+    }
+
+    const fieldlist = tableconstructor.children[1];
+    if (fieldlist.type !== 'fieldlist') {
+        throw new Error(`Expected a fieldlist, got ${fieldlist.type}`);
+    }
 
     return toLuaValue(table);
 }
@@ -290,7 +219,7 @@ function fetchTokenValue(token: AbstractSyntaxTree): LuaValue {
     return toLuaValue(null);
 }
 
-function evaluateExpression(expression: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function evaluateExpression(expression: AbstractSyntaxTree, scope: LuaScope): LuaValue {
     if (expression.type !== 'exp') {
         throw new Error(`Expected an exp, got ${expression.type}`);
     }
@@ -298,22 +227,22 @@ function evaluateExpression(expression: AbstractSyntaxTree, globalScope: LuaScop
     debug(`Evaluating expression '${expression.children.map(p => p.type)}'`);
 
     if (expression.children[0].type === 'token') {
-        if (expression.children[0].token?.type === 'operator') { // ...
-
+        if (expression.children[0].token.type === 'operator') { // ...
+            return scope.get(toLuaValue('...')) ?? toLuaValue(null);
         } else {
             return fetchTokenValue(expression.children[0]);
         }
     } else if (expression.children.length === 1) {
         switch (expression.children[0].type) {
             case 'functiondef':
-                return defineFunction(expression.children[0], globalScope, localScope);
+                return defineFunction(expression.children[0], scope);
             case 'tableconstructor':
-                return constructTable(expression.children[0], globalScope, localScope);
+                return constructTable(expression.children[0], scope);
             case 'prefixexp':
-                return evaluatePrefixedExpression(expression.children[0], globalScope, localScope);
+                return evaluatePrefixedExpression(expression.children[0], scope);
         }
     } else if (expression.children.length === 3 && expression.children[1].type === 'binop') {
-        const lhs = evaluateExpression(expression.children[0], globalScope, localScope);
+        const lhs = evaluateExpression(expression.children[0], scope);
         const op = fetchOperator(expression.children[1]).value;
 
         switch (op) {
@@ -325,7 +254,7 @@ function evaluateExpression(expression: AbstractSyntaxTree, globalScope: LuaScop
                     return toLuaValue(false);
                 }
 
-                return evaluateExpression(expression.children[2], globalScope, localScope);
+                return evaluateExpression(expression.children[2], scope);
             case 'OR':
                 debug(`Evaluating 'or' expression and short-circuiting if necessary`);
                 // Short-circuiting
@@ -334,10 +263,10 @@ function evaluateExpression(expression: AbstractSyntaxTree, globalScope: LuaScop
                     return lhs;
                 }
 
-                return evaluateExpression(expression.children[2], globalScope, localScope);
+                return evaluateExpression(expression.children[2], scope);
         }
 
-        const rhs = evaluateExpression(expression.children[2], globalScope, localScope);
+        const rhs = evaluateExpression(expression.children[2], scope);
 
         switch (op) {
             case '+':
@@ -524,7 +453,7 @@ function evaluateExpression(expression: AbstractSyntaxTree, globalScope: LuaScop
         }
     } else if (expression.children.length === 2 && expression.children[0].type === 'unop') {
         const op = fetchOperator(expression.children[0]).value;
-        const rhs = evaluateExpression(expression.children[1], globalScope, localScope);
+        const rhs = evaluateExpression(expression.children[1], scope);
 
         switch (op) {
             case '-':
@@ -553,64 +482,60 @@ function evaluateExpression(expression: AbstractSyntaxTree, globalScope: LuaScop
     return toLuaValue(null);
 }
 
-function evaluateExpressionList(explist: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue[] {
+function evaluateExpressionList(explist: AbstractSyntaxTree, scope: LuaScope): LuaValue[] {
     if (explist.type !== 'explist') {
         throw new Error(`Expected an explist, got ${explist.type}`);
     }
 
     const values: LuaValue[] = [];
     for (const exp of explist.children) {
-        values.push(evaluateExpression(exp, globalScope, localScope));
+        values.push(evaluateExpression(exp, scope));
     }
 
     return values;
 }
 
-function fetchVariable(variable: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function fetchVariable(variable: AbstractSyntaxTree, scope: LuaScope): LuaValue {
     if (variable.type !== 'var') {
         throw new Error(`Expected a var, got ${variable.type}`);
     }
 
     if (variable.children.length === 1) {
         const varname = toLuaValue(fetchIdentifier(variable.children[0]));
-        debug(`Fetching variable '${varname.jsValue}' from localScope`);
-        if (localScope.has(varname)) {
-            debug(`Variable '${varname.jsValue}' has the value ${localScope.get(varname)!.jsValue}`);
-            return localScope.get(varname)!;
+        debug(`Fetching variable '${varname.jsValue}' from closest scope`);
+
+        const value = scope.getRecursive(varname);
+        if (value) {
+            debug(`Variable '${varname.jsValue}' has the value of type ${value.type}`);
+            return value;
         }
+    } else if (variable.children.length === 4) { // prefixexp '[' exp ']'
+        const table = evaluatePrefixedExpression(variable.children[0], scope);
+        const index = evaluateExpression(variable.children[2], scope);
 
-        debug(`Fetching variable '${varname.jsValue}' from globalScope`);
-
-        if (!globalScope.has(varname)) {
-            debug(`variable '${varname.jsValue}' is not on the globalScope, returning nil`);
-        }
-
-        //debug(`Variable '${varname.jsValue}' has the value ${globalScope.get(varname)!.jsValue}`);
-
-        return globalScope.get(varname)!;
-    } else if (variable.children.length === 4) {
-        const table = evaluatePrefixedExpression(variable.children[0], globalScope, localScope);
-        const index = evaluateExpression(variable.children[2], globalScope, localScope);
+        debug(`Fetching index '${index.jsValue}' from table '${table.jsValue}'`);
 
         if (table.type === LuaType.Table) {
             if (index.type === LuaType.Nil) {
                 throw new Error(`'index' cannot be nil`);
             }
 
-            return toLuaValue(table.jsValue.get(index));
+            return table.jsValue.get(index) ?? toLuaValue(null);
         }
 
         throw new Error(`'variable' is not a table`);
-    } else if (variable.children.length === 3) {
-        const table = evaluatePrefixedExpression(variable.children[0], globalScope, localScope);
-        const index = evaluateExpression(variable.children[1], globalScope, localScope);
+    } else if (variable.children.length === 3) { // prefixexp '.' NAME
+        const table = evaluatePrefixedExpression(variable.children[0], scope);
+        const index = evaluateExpression(variable.children[1], scope);
+
+        debug(`Fetching index '${index.jsValue}' from table '${table.jsValue}'`);
 
         if (table.type === LuaType.Table) {
             if (index.type === LuaType.Nil) {
                 throw new Error(`'index' cannot be nil`);
             }
 
-            return toLuaValue(table.jsValue.get(index));
+            return table.jsValue.get(index) ?? toLuaValue(null);
         }
 
         throw new Error(`'variable' is not a table`);
@@ -620,7 +545,7 @@ function fetchVariable(variable: AbstractSyntaxTree, globalScope: LuaScope, loca
     return toLuaValue(null);
 }
 
-function evaluatePrefixedExpression(prefixexp: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function evaluatePrefixedExpression(prefixexp: AbstractSyntaxTree, scope: LuaScope): LuaValue {
     if (prefixexp.type !== 'prefixexp') {
         throw new Error(`Expected a prefixexp, got ${prefixexp.type}`);
     }
@@ -629,14 +554,14 @@ function evaluatePrefixedExpression(prefixexp: AbstractSyntaxTree, globalScope: 
     if (prefixexp.children.length === 1) {
         switch (prefixexp.children[0].type) {
             case 'var':
-                return fetchVariable(prefixexp.children[0], globalScope, localScope);
+                return fetchVariable(prefixexp.children[0], scope);
             case 'functioncall':
-                return callFunction(prefixexp.children[0], globalScope, localScope);
+                return callFunction(prefixexp.children[0], scope);
         }
     } else if (prefixexp.children.length === 3) { // '(' exp ')'
         const exp = prefixexp.children[1];
 
-        return evaluateExpression(exp, globalScope, localScope);
+        return evaluateExpression(exp, scope);
     }
 
     // Should never happen
@@ -644,13 +569,13 @@ function evaluatePrefixedExpression(prefixexp: AbstractSyntaxTree, globalScope: 
     return toLuaValue(null);
 }
 
-function callFunction(functioncall: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function callFunction(functioncall: AbstractSyntaxTree, scope: LuaScope): LuaValue {
     if (functioncall.type !== 'functioncall') {
         throw new Error(`Expected a functioncall, got ${functioncall.type}`);
     }
 
     if (functioncall.children.length === 2) { // prefixexp args
-        const func = evaluatePrefixedExpression(functioncall.children[0], globalScope, localScope);
+        const func = evaluatePrefixedExpression(functioncall.children[0], scope);
         const args = functioncall.children[1];
         if (args.type !== 'args') {
             throw new Error(`Expected an args, got ${args.type}`);
@@ -658,56 +583,73 @@ function callFunction(functioncall: AbstractSyntaxTree, globalScope: LuaScope, l
 
         if (func.type === LuaType.Function) {
             if (args.children.length === 1 && args.children[0].type === 'token') { // function 'string'
-                const argValues = [args.children[0].token!.value].map(av => toLuaValue(av.trim()));
+                const argValues = [args.children[0].token.value].map(av => toLuaValue(av.trim()));
                 debug(`Calling function '${func.name}' with arguments '${argValues.map(av => av.type).join(', ')}'`);
 
-                const fnCallScope: LuaScope = new Map(localScope);
+                const fnArgs: Map<string, LuaValue> = new Map();
+                const fnVarargs: LuaValue[] = [];
                 for (let i = 0; i < func.arguments.length; i++) {
                     if (func.arguments[i] === '...') {
-                        continue;
+                        fnVarargs.push(...argValues.slice(i));
+                        break;
                     }
 
-                    fnCallScope.set(toLuaValue(func.arguments[i]), argValues[i]);
+                    fnArgs.set(func.arguments[i], i <= argValues.length - 1 ? argValues[i] : toLuaValue(null));
                 }
 
-                const result = func.jsValue(globalScope, fnCallScope);
+                const result = func.jsValue(func.scope ?? scope, fnArgs, fnVarargs);
 
                 debug(`Function '${func.name}' returned '${JSON.stringify(result)}'`);
 
                 return result;
-            } else if (args.children.length === 1 && args.children[0].type === 'tableconstructor') {
-                const argValues = [args.children[0]].map(arg => constructTable(arg.children[0], globalScope, localScope));
+            } else if (args.children.length === 1 && args.children[0].type === 'tableconstructor') { // function tableconstructor
+                const argValues = [args.children[0]].map(arg => constructTable(arg, scope));
                 debug(`Calling function '${func.name}' with arguments '${argValues.map(av => av.type).join(', ')}'`);
 
-                const fnCallScope: LuaScope = new Map(localScope);
+                const fnArgs: Map<string, LuaValue> = new Map();
+                const fnVarargs: LuaValue[] = [];
                 for (let i = 0; i < func.arguments.length; i++) {
                     if (func.arguments[i] === '...') {
-                        continue;
+                        fnVarargs.push(...argValues.slice(i));
+                        break;
                     }
 
-                    fnCallScope.set(toLuaValue(func.arguments[i]), argValues[i]);
+                    fnArgs.set(func.arguments[i], i <= argValues.length - 1 ? argValues[i] : toLuaValue(null));
                 }
 
-                const result = func.jsValue(globalScope, fnCallScope);
+                const result = func.jsValue(func.scope ?? scope, fnArgs, fnVarargs);
+
+                debug(`Function '${func.name}' returned '${JSON.stringify(result)}'`);
+
+                return result;
+            } else if (args.children.length === 2) { // function '(' ')'
+                debug(`Calling function '${func.name}' with no arguments`);
+
+                const fnArgs: Map<string, LuaValue> = new Map();
+                const fnVarargs: LuaValue[] = [];
+
+                const result = func.jsValue(func.scope ?? scope, fnArgs, fnVarargs);
 
                 debug(`Function '${func.name}' returned '${JSON.stringify(result)}'`);
 
                 return result;
             }
 
-            const argValues = evaluateExpressionList(args.children[1], globalScope, localScope);
+            const argValues = evaluateExpressionList(args.children[1], scope);
             debug(`Calling function '${func.name}' with arguments '${argValues.map(av => av.type).join(', ')}'`);
 
-            const fnCallScope: LuaScope = new Map(localScope);
+            const fnArgs: Map<string, LuaValue> = new Map();
+            const fnVarargs: LuaValue[] = [];
             for (let i = 0; i < func.arguments.length; i++) {
                 if (func.arguments[i] === '...') {
-                    continue;
+                    fnVarargs.push(...argValues.slice(i));
+                    break;
                 }
 
-                fnCallScope.set(toLuaValue(func.arguments[i]), argValues[i]);
+                fnArgs.set(func.arguments[i], i <= argValues.length - 1 ? argValues[i] : toLuaValue(null));
             }
 
-            const result = func.jsValue(globalScope, fnCallScope);
+            const result = func.jsValue(func.scope ?? scope, fnArgs, fnVarargs);
 
             debug(`Function '${func.name}' returned '${JSON.stringify(result)}'`);
 
@@ -720,12 +662,12 @@ function callFunction(functioncall: AbstractSyntaxTree, globalScope: LuaScope, l
     return toLuaValue(null);
 }
 
-function defineVariables(varlist: AbstractSyntaxTree, explist: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope) {
+function defineVariables(varlist: AbstractSyntaxTree, explist: AbstractSyntaxTree, scope: LuaScope) {
     if (varlist.type !== 'varlist') {
         throw new Error(`Expected a varlist, got ${varlist.type}`);
     }
 
-    const expValues = evaluateExpressionList(explist, globalScope, localScope);
+    const expValues = evaluateExpressionList(explist, scope);
 
     debug(`Defining ${varlist.children.length} variables`);
 
@@ -736,15 +678,15 @@ function defineVariables(varlist: AbstractSyntaxTree, explist: AbstractSyntaxTre
         }
 
         if (v.children.length === 4) { // prefixexp '[' exp ']'
-            const table = evaluatePrefixedExpression(v.children[0], globalScope, localScope);
-            const index = evaluateExpression(v.children[2], globalScope, localScope);
+            const table = evaluatePrefixedExpression(v.children[0], scope);
+            const index = evaluateExpression(v.children[2], scope);
 
             if (table.type === LuaType.Table) {
                 if (index.type === LuaType.Nil) {
                     throw new Error(`'index' cannot be nil`);
                 }
 
-                debug(`Assigning expression ${i} to table index '${index.jsValue}'`);
+                debug(`Assigning expression ${i} type ${expValues[i].type} to table index '${index.jsValue}'`);
 
                 const val = expValues[i];
                 table.jsValue.set(index, val);
@@ -752,7 +694,7 @@ function defineVariables(varlist: AbstractSyntaxTree, explist: AbstractSyntaxTre
 
             continue;
         } else if (v.children.length === 3) { // prefixexp '.' NAME
-            const table = evaluatePrefixedExpression(v.children[0], globalScope, localScope);
+            const table = evaluatePrefixedExpression(v.children[0], scope);
             const index = fetchTokenValue(v.children[2]);
 
             if (table.type === LuaType.Table) {
@@ -770,23 +712,22 @@ function defineVariables(varlist: AbstractSyntaxTree, explist: AbstractSyntaxTre
         debug(`Assigning expression ${i} to variable '${varname}'`);
 
         const val = expValues[i];
-        const scope = localScope.has(toLuaValue(varname)) ? localScope : globalScope;
         if (val.type === LuaType.Nil) {
-            scope.delete(toLuaValue(varname));
+            scope.deleteRecursive(toLuaValue(varname));
         } else {
-            scope.set(toLuaValue(varname), val);
+            scope.setRecursive(toLuaValue(varname), val);
         }
 
         debug(`Variable '${varname}' now has value '${val.jsValue}'`);
     }
 }
 
-function defineLocalVariables(attnamelist: AbstractSyntaxTree, explist: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope) {
+function defineLocalVariables(attnamelist: AbstractSyntaxTree, explist: AbstractSyntaxTree, scope: LuaScope) {
     if (attnamelist.type !== 'attnamelist') {
         throw new Error(`Expected an attnamelist, got ${attnamelist.type}`);
     }
 
-    const expValues = evaluateExpressionList(explist, globalScope, localScope);
+    const expValues = evaluateExpressionList(explist, scope);
 
     debug(`Defining ${attnamelist.children.length} local variables`);
     let exp = 0;
@@ -798,54 +739,125 @@ function defineLocalVariables(attnamelist: AbstractSyntaxTree, explist: Abstract
 
         const varname = fetchIdentifier(attName);
 
-        debug(`Assigning expression ${exp} to variable '${varname}' in localScope`);
+        debug(`Assigning expression ${exp} to variable '${varname}' in closest scope`);
 
         const val = expValues[exp];
-        localScope.set(toLuaValue(varname), val);
+        scope.set(toLuaValue(varname), val);
 
         debug(`Variable '${varname}' now has value '${val.jsValue}'`);
     }
 }
 
-function defineLocalFunction(funcname: AbstractSyntaxTree, funcbody: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope) {
+function defineLocalFunction(funcname: AbstractSyntaxTree, funcbody: AbstractSyntaxTree, scope: LuaScope) {
     const name = fetchIdentifier(funcname);
-    const func = parseFunctionBody(name, funcbody, globalScope, localScope);
+    const func = parseFunctionBody(name, funcbody, scope);
 
     debug(`Defining local function '${name}'`);
-    localScope.set(toLuaValue(name), func);
+    scope.set(toLuaValue(name), func);
 }
 
-function runForLoop(variableName: AbstractSyntaxTree, assign: AbstractSyntaxTree, stopCondition: AbstractSyntaxTree, block: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope) {
+function runWhileLoop(condition: AbstractSyntaxTree, block: AbstractSyntaxTree, scope: LuaScope) {
+    if (condition.type !== 'exp') {
+        throw new Error(`Expected an exp, got ${condition.type}`);
+    }
+
+    debug(`Running while loop`);
+
+    const whileScope = new LuaScope(scope);
+    while (isTruthyLuaValue(evaluateExpression(condition, scope))) {
+        runBlock(block, whileScope, true);
+    }
+}
+
+function runRepeatLoop(block: AbstractSyntaxTree, condition: AbstractSyntaxTree, scope: LuaScope) {
+    if (condition.type !== 'exp') {
+        throw new Error(`Expected an exp, got ${condition.type}`);
+    }
+
+    debug(`Running repeat loop`);
+
+    const doScope = new LuaScope(scope);
+    do {
+        runBlock(block, doScope, true);
+    } while (isFalsyLuaValue(evaluateExpression(condition, doScope)));
+}
+
+function runIfStatement(ifstat: AbstractSyntaxTree, scope: LuaScope) {
+    if (ifstat.type !== 'stat') {
+        throw new Error(`Expected a stat, got ${ifstat.type}`);
+    }
+
+    if (ifstat.children[0].type !== 'token' || ifstat.children[0].token.type !== 'reserved' || ifstat.children[0].token.value !== 'IF') {
+        throw new Error(`Expected an IF statement, got ${ifstat.children[0].type}`);
+    }
+
+    debug(`Running if statement`);
+
+    for (let currIndex = 0; currIndex < ifstat.children.length; currIndex += 4) {
+        // IF exp THEN block
+        // ELSEIF exp THEN block
+        // ELSE block
+        // END
+        const currToken = ifstat.children[currIndex];
+        if (currToken.type === 'token' && currToken.token.type === 'reserved' && currToken.token.value === 'END') {
+            break;
+        }
+
+        if (currToken.type !== 'token' || currToken.token.type !== 'reserved' || currToken.token.value !== 'IF' && currToken.token.value !== 'ELSEIF' && currToken.token.value !== 'ELSE') {
+            throw new Error(`Expected an IF, ELSEIF or ELSE statement, got ${currToken.type}`);
+        }
+
+        if (currToken.token.value === 'ELSE') {
+            runBlock(ifstat.children[currIndex + 1], new LuaScope(scope));
+            break;
+        }
+
+        const condition = evaluateExpression(ifstat.children[currIndex + 1], scope);
+        if (isTruthyLuaValue(condition)) {
+            runBlock(ifstat.children[currIndex + 3], new LuaScope(scope));
+            break;
+        }
+    }
+}
+
+function runForLoop(variableName: AbstractSyntaxTree, initalValue: AbstractSyntaxTree, limit: AbstractSyntaxTree, step: AbstractSyntaxTree | null, block: AbstractSyntaxTree, scope: LuaScope) {
     if (variableName.type !== 'token') {
         throw new Error(`Expected a token, got ${variableName.type}`);
     }
 
     debug(`Running for loop with variable '${variableName.token.value}'`);
-    const variable = evaluateExpression(assign, globalScope, localScope);
+    const variable = evaluateExpression(initalValue, scope);
 
     if (variable.type !== LuaType.Number) {
         throw new Error(`For loop variable '${variableName.token.value}' is not a number`);
     }
 
-    let stopConditionValue = evaluateExpression(stopCondition, globalScope, localScope);
+    let stopConditionValue = evaluateExpression(limit, scope);
     if (stopConditionValue.type !== LuaType.Number) {
         throw new Error(`For loop stop condition is not a number`);
     }
 
-    const forScope: LuaScope = localScope;//new Map(localScope);
-    for (let i = variable.jsValue; i <= stopConditionValue.jsValue; i++) {
+    const stepValue = step ? evaluateExpression(step, scope) : toLuaValue(1);
+    if (stepValue.type !== LuaType.Number) {
+        throw new Error(`For loop step is not a number`);
+    }
+
+    if (stepValue.jsValue === 0) {
+        throw new Error(`For loop step cannot be zero`);
+    }
+
+    for (let i = variable.jsValue; stepValue.jsValue > 0 ? i <= stopConditionValue.jsValue : i >= stopConditionValue.jsValue; i += stepValue.jsValue) {
+        const forScope = new LuaScope(scope);
         forScope.set(toLuaValue(variableName.token.value), toLuaValue(i));
-        runBlock(block, globalScope, forScope);
-        stopConditionValue = evaluateExpression(stopCondition, globalScope, forScope);
+        runBlock(block, forScope, true);
+        stopConditionValue = evaluateExpression(limit, forScope);
         if (stopConditionValue.type !== LuaType.Number) {
             throw new Error(`For loop stop condition is not a number`);
         }
     }
-
-    forScope.delete(toLuaValue(variableName.token.value));
 }
 
-function runForInLoop(namelist: AbstractSyntaxTree, explist: AbstractSyntaxTree, block: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope) {
+function runForInLoop(namelist: AbstractSyntaxTree, explist: AbstractSyntaxTree, block: AbstractSyntaxTree, scope: LuaScope) {
     if (namelist.type !== 'namelist') {
         throw new Error(`Expected a namelist, got ${namelist.type}`);
     }
@@ -857,7 +869,7 @@ function runForInLoop(namelist: AbstractSyntaxTree, explist: AbstractSyntaxTree,
     debug(`Running for-in loop`);
 }
 
-function runStatement(statement: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope) {
+function runStatement(statement: AbstractSyntaxTree, scope: LuaScope) {
     if (statement.type !== 'stat') {
         throw new Error(`Expected a statement, got ${statement.type}`);
     }
@@ -866,9 +878,9 @@ function runStatement(statement: AbstractSyntaxTree, globalScope: LuaScope, loca
         const varlist = statement.children[0];
         const explist = statement.children[2];
 
-        defineVariables(varlist, explist, globalScope, localScope);
+        defineVariables(varlist, explist, scope);
     } else if (statement.children[0].type === 'functioncall') {
-        callFunction(statement.children[0], globalScope, localScope);
+        callFunction(statement.children[0], scope);
     } else if (statement.children[0].type === 'token') {
         switch (statement.children[0].token.type) {
             case 'separator':
@@ -877,44 +889,54 @@ function runStatement(statement: AbstractSyntaxTree, globalScope: LuaScope, loca
             case 'reserved':
                 switch (statement.children[0].token.value) {
                     case 'DO':
-                        runBlock(statement.children[1], globalScope, new Map(localScope));
+                        runBlock(statement.children[1], new LuaScope(scope));
+                        break;
+                    case 'WHILE':
+                        runWhileLoop(statement.children[1], statement.children[3], scope);
+                        break;
+                    case 'REPEAT':
+                        runRepeatLoop(statement.children[1], statement.children[3], scope);
+                        break;
+                    case 'IF':
+                        runIfStatement(statement, scope);
                         break;
                     case 'FOR':
-                        if (statement.children[1].type === 'token' && statement.children[1].token!.type === 'identifier') {
-                            runForLoop(statement.children[1]!, statement.children[3], statement.children[5], statement.children[7], globalScope, localScope);
+                        if (statement.children[1].type === 'token' && statement.children[1].token.type === 'identifier') {
+                            runForLoop(statement.children[1], statement.children[3], statement.children[5], statement.children.length === 9 ? null : statement.children[7], statement.children[statement.children.length === 9 ? 7 : 9], scope);
                         } else {
-                            runForInLoop(statement.children[1], statement.children[3], statement.children[5], globalScope, localScope);
+                            runForInLoop(statement.children[1], statement.children[3], statement.children[5], scope);
                         }
 
                         break;
                     case 'FUNCTION':
-                        defineNamedFunction(statement.children[1], statement.children[2], globalScope, localScope);
+                        defineNamedFunction(statement.children[1], statement.children[2], scope);
                         break;
                     case 'LOCAL':
-                        if (statement.children[1].type === 'token' && statement.children[1].token!.value === 'FUNCTION') {
-                            defineLocalFunction(statement.children[2], statement.children[3], globalScope, localScope);
+                        if (statement.children[1].type === 'token' && statement.children[1].token.value === 'FUNCTION') {
+                            defineLocalFunction(statement.children[2], statement.children[3], scope);
                         } else {
-                            defineLocalVariables(statement.children[1], statement.children[3], globalScope, localScope);
+                            defineLocalVariables(statement.children[1], statement.children[3], scope);
                         }
 
                         break;
                 }
+
                 break;
         }
     }
 }
 
-function runReturnStatement(retstat: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function runReturnStatement(retstat: AbstractSyntaxTree, scope: LuaScope): LuaValue {
     if (retstat.type !== 'retstat') {
         throw new Error(`Expected a return statement, got ${retstat.type}`);
     }
 
-    const returnValues = evaluateExpressionList(retstat.children[1], globalScope, localScope);
+    const returnValues = evaluateExpressionList(retstat.children[1], scope);
 
     return returnValues.length === 1 ? returnValues[0] : toLuaValue(returnValues);
 }
 
-function runBlock(block: AbstractSyntaxTree, globalScope: LuaScope, localScope: LuaScope): LuaValue {
+function runBlock(block: AbstractSyntaxTree, scope: LuaScope, allowBreak = false): LuaValue {
     if (block.type !== 'block') {
         throw new Error(`Expected a chunk, got ${block.type}`);
     }
@@ -925,21 +947,27 @@ function runBlock(block: AbstractSyntaxTree, globalScope: LuaScope, localScope: 
         }
 
         if (statement.type === 'retstat') {
-            return runReturnStatement(statement, globalScope, localScope);
+            return runReturnStatement(statement, scope);
+        } else if (statement.type === 'stat' && statement.children.length === 1 && statement.children[0].type === 'token' && statement.children[0].token.type === 'reserved' && statement.children[0].token.value === 'BREAK') {
+            if (!allowBreak) {
+                throw new Error(`'break' statement outside loop`);
+            }
+
+            return toLuaValue(null);
         }
 
-        runStatement(statement, globalScope, localScope);
+        runStatement(statement, scope);
     }
 
     return toLuaValue(null);
 }
 
-export function interpret(tree: AbstractSyntaxTree, globalScope: LuaScope) {
+export function interpret(tree: AbstractSyntaxTree, globalScope: LuaScope): LuaValue {
     if (tree.type !== 'chunk') {
         throw new Error(`Expected a chunk, got ${tree.type}`);
     }
 
-    runBlock(tree.children[0], globalScope, new Map());
+    return runBlock(tree.children[0], new LuaScope(globalScope));
 }
 
 function debug(...args: any[]) {

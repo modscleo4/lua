@@ -543,7 +543,7 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
         const currTry = tries[c];
         let k = currTry.k + 1;
         inner: for (; k < symbols.length; k++) {
-            const grammarSymbol = symbols[k];
+            const grammarSymbol = symbols[reversed ? symbols.length - 1 - k : k];
             if (currTry.j < 0 || currTry.j >= tokens.length) {
                 currTry.failed = true;
                 currTry.error = 'Unexpected end of input';
@@ -551,16 +551,17 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
             }
 
             if (grammarSymbol instanceof Terminal) {
+                const token = tokens[reversed ? tokens.length - 1 - currTry.j : currTry.j];
                 // Terminal, check if the token matches
                 for (const property in grammarSymbol.token) {
-                    if (grammarSymbol.token[property as keyof typeof grammarSymbol.token] !== tokens[currTry.j][property as keyof Token]) {
+                    if (grammarSymbol.token[property as keyof typeof grammarSymbol.token] !== token[property as keyof Token]) {
                         currTry.failed = true;
-                        currTry.error = `Expected ${JSON.stringify(grammarSymbol.token)} but got ${JSON.stringify(tokens[currTry.j])}`;
+                        currTry.error = `Expected ${JSON.stringify(grammarSymbol.token)} but got ${JSON.stringify(token)}`;
                         continue outer;
                     }
                 }
 
-                currTry.children.push({ type: 'token', token: tokens[currTry.j] });
+                currTry.children.push({ type: 'token', token });
 
                 currTry.j++;
             } else if (grammarSymbol instanceof NonTerminal) {
@@ -650,16 +651,6 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
     return { matches: true, tries: tries.filter(t => !t.failed).map(t => ({ parsedTokens: t.j - i, children: t.children })) };
 }
 
-function maxRecursion(rule: keyof Syntax, j: number): number {
-    if ((rule === 'prefixexp') && j === 0) {
-        return 0;
-    } else if (rule === 'prefixexp' && j === 1) {
-        return 0;
-    }
-
-    return 0;
-}
-
 function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], reversed: boolean = false): {
     matches: false;
     parsedTokens: number;
@@ -680,7 +671,7 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
 
     const parserRules = syntax[rule];
     outer: for (let j = 0; j < parserRules.length; j++) {
-        if (stack.filter(r => r.rule === rule && r.i === i && r.j === j).length > maxRecursion(rule, j)) {
+        if (stack.find(r => r.rule === rule && r.i === i && r.j === j)) {
             // Avoid left recursion, we already are in this rule
             continue;
         }
@@ -688,7 +679,7 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
         stack.push({ rule, i, j });
 
         try {
-            const symbols = reversed ? [...parserRules[j]].reverse() : parserRules[j];
+            const symbols = parserRules[j];
             const matchingResult = tokensMatchSymbols(symbols, tokens, i, stack, reversed);
             if (!matchingResult.matches) {
                 if (matchingResult.parsedTokens > maxParsed || maxParsed === 0) {
@@ -707,10 +698,9 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
             }
 
             if (((rule === 'functioncall') || (rule === 'prefixexp' && (j === 0 || j === 1))) && !reversed) { // prefixexp is left-recursive, also try to parse from the right
-                const reversedSymbols = [...symbols].reverse();
                 let _i = tokens.length - 1;
                 while (_i > i) {
-                    const reversedMatchingResult = tokensMatchSymbols(reversedSymbols, [...tokens].reverse(), tokens.length - 1 - _i, [], true);
+                    const reversedMatchingResult = tokensMatchSymbols(symbols, tokens, tokens.length - 1 - _i, [], true);
                     if (reversedMatchingResult.matches) {
                         for (const t of reversedMatchingResult.tries) {
                             if (
@@ -743,8 +733,6 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
     tries.sort((a, b) => b.parsedTokens - a.parsedTokens);
 
     if (reversed) {
-        tries.reverse();
-
         for (const t of tries) {
             if (t.tree.type === 'token') {
                 continue;

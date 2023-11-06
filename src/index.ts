@@ -20,30 +20,26 @@ import { readFileSync, writeFileSync } from "fs";
 
 import { tokenizer } from "./tokenizer.js";
 import { ParsingError, parser } from "./parser.js";
-import { LuaScope, LuaType, interpret, toLuaValue } from "./interpreter.js";
+import { interpret } from "./interpreter.js";
+import { LuaScope } from "./vm.js";
 
-const code = readFileSync('test.lua', 'utf8');
+import luaStandardLibrary from "./stdlib.js";
+
+if (process.argv.length < 3) {
+    console.error('Usage: node dist/index.js <file>');
+    process.exit(1);
+}
+
+const code = readFileSync(process.argv[2], 'utf8');
 
 try {
     const resultTokens = tokenizer(code);
     const resultTokensFiltered = resultTokens.filter(token => token.type !== 'comment' && (token.type !== 'separator' || token.additional !== 'whitespace'));
 
-    const globalScope: LuaScope = new Map();
-
-    const luaPrintFn = function (globalScope: LuaScope, args: LuaScope) {
-        const v = args.get(toLuaValue('v')) ?? toLuaValue(null);
-        if (v.type === LuaType.Table) {
-            console.log('table: ' + v.jsValue);
-            return toLuaValue(null);
-        }
-
-        console.log(v.jsValue ?? '');
-        return toLuaValue(null);
-    };
-    const printFunction = toLuaValue(luaPrintFn);
-    printFunction.name = 'print';
-    printFunction.arguments = ['v'];
-    globalScope.set(toLuaValue(printFunction.name), printFunction);
+    const globalScope = new LuaScope();
+    for (const [key, value] of luaStandardLibrary) {
+        globalScope.set(key, value); // Add standard library variables to global scope
+    }
 
     //console.log(resultTokensFiltered);
 
