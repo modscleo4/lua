@@ -767,6 +767,8 @@ function runWhileLoop(condition: AbstractSyntaxTree, block: AbstractSyntaxTree, 
     while (isTruthyLuaValue(evaluateExpression(condition, scope))) {
         runBlock(block, whileScope, true);
     }
+
+    whileScope.closeVariables();
 }
 
 function runRepeatLoop(block: AbstractSyntaxTree, condition: AbstractSyntaxTree, scope: LuaScope) {
@@ -776,10 +778,12 @@ function runRepeatLoop(block: AbstractSyntaxTree, condition: AbstractSyntaxTree,
 
     debug(`Running repeat loop`);
 
-    const doScope = new LuaScope(scope);
+    const repeatScope = new LuaScope(scope);
     do {
-        runBlock(block, doScope, true);
-    } while (isFalsyLuaValue(evaluateExpression(condition, doScope)));
+        runBlock(block, repeatScope, true);
+    } while (isFalsyLuaValue(evaluateExpression(condition, repeatScope)));
+
+    repeatScope.closeVariables();
 }
 
 function runIfStatement(ifstat: AbstractSyntaxTree, scope: LuaScope) {
@@ -850,6 +854,7 @@ function runForLoop(variableName: AbstractSyntaxTree, initalValue: AbstractSynta
         const forScope = new LuaScope(scope);
         forScope.set(toLuaValue(variableName.token.value), toLuaValue(i));
         runBlock(block, forScope, true);
+        forScope.closeVariables();
         stopConditionValue = evaluateExpression(limit, forScope);
         if (stopConditionValue.type !== LuaType.Number) {
             throw new Error(`For loop stop condition is not a number`);
@@ -862,11 +867,16 @@ function runForInLoop(namelist: AbstractSyntaxTree, explist: AbstractSyntaxTree,
         throw new Error(`Expected a namelist, got ${namelist.type}`);
     }
 
-    if (explist.type !== 'explist') {
-        throw new Error(`Expected an explist, got ${explist.type}`);
-    }
+    const expValues = evaluateExpressionList(explist, scope);
 
     debug(`Running for-in loop`);
+}
+
+function runDoBlock(block: AbstractSyntaxTree, scope: LuaScope) {
+    const doScope = new LuaScope(scope);
+    runBlock(block, doScope);
+
+    doScope.closeVariables();
 }
 
 function runStatement(statement: AbstractSyntaxTree, scope: LuaScope) {
@@ -889,7 +899,7 @@ function runStatement(statement: AbstractSyntaxTree, scope: LuaScope) {
             case 'reserved':
                 switch (statement.children[0].token.value) {
                     case 'DO':
-                        runBlock(statement.children[1], new LuaScope(scope));
+                        runDoBlock(statement.children[1], scope);
                         break;
                     case 'WHILE':
                         runWhileLoop(statement.children[1], statement.children[3], scope);
@@ -962,7 +972,7 @@ function runBlock(block: AbstractSyntaxTree, scope: LuaScope, allowBreak = false
     return toLuaValue(null);
 }
 
-export function interpret(tree: AbstractSyntaxTree, globalScope: LuaScope): LuaValue {
+export function runChunk(tree: AbstractSyntaxTree, globalScope: LuaScope): LuaValue {
     if (tree.type !== 'chunk') {
         throw new Error(`Expected a chunk, got ${tree.type}`);
     }

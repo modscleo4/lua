@@ -16,13 +16,12 @@
  * @author Dhiego Cassiano Fogaça Barbosa <modscleo4@outlook.com>
  */
 
-import { readFileSync, writeFileSync } from "fs";
+import { readFile, writeFile } from "node:fs/promises";
 
 import { tokenizer } from "./tokenizer.js";
 import { ParsingError, parser } from "./parser.js";
-import { interpret } from "./interpreter.js";
 import { LuaScope } from "./vm.js";
-
+import { runChunk } from "./interpreter.js";
 import luaStandardLibrary from "./stdlib.js";
 
 if (process.argv.length < 3) {
@@ -30,30 +29,38 @@ if (process.argv.length < 3) {
     process.exit(1);
 }
 
-const code = readFileSync(process.argv[2], 'utf8');
+const filename = process.argv[2];
+
+const code = await readFile(filename, 'utf8');
 
 try {
+    const tokenizationStart = performance.now();
     const resultTokens = tokenizer(code);
     const resultTokensFiltered = resultTokens.filter(token => token.type !== 'comment' && (token.type !== 'separator' || token.additional !== 'whitespace'));
+    console.log(`Tokenization took ${performance.now() - tokenizationStart}ms`);
 
-    const globalScope = new LuaScope();
-    for (const [key, value] of luaStandardLibrary) {
-        globalScope.set(key, value); // Add standard library variables to global scope
-    }
+    writeFile('tokens.json', JSON.stringify(resultTokensFiltered, null, 2), 'utf8');
 
-    //console.log(resultTokensFiltered);
-
+    const parsingStart = performance.now();
     const parserResult = {
         type: 'script',
         line: 1,
         column: 1,
         body: parser(resultTokensFiltered),
     };
+    console.log(`Parsing took ${performance.now() - parsingStart}ms`);
 
-    writeFileSync('ast.json', JSON.stringify(parserResult, null, 2));
-    //console.dir(parserResult, { depth: null });
+    writeFile('ast.json', JSON.stringify(parserResult, null, 2), 'utf8');
 
-    interpret(parserResult.body.tree, globalScope);
+    const globalScope = new LuaScope();
+    for (const [key, value] of luaStandardLibrary) {
+        globalScope.set(key, value); // Add standard library variables to global scope
+    }
+
+    console.log('Interpreting...');
+    const interpretingStart = performance.now();
+    const ret = runChunk(parserResult.body.tree, globalScope);
+    console.log(`File ${filename} returned ${JSON.stringify(ret)} after ${performance.now() - interpretingStart}ms`);
 } catch (e) {
     if (e instanceof ParsingError) {
         console.error(e.message, e.grammarSymbol.toString(), e.token);

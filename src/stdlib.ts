@@ -55,7 +55,21 @@ function luaAssert(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaVal
     return toLuaValue(null);
 }
 
-function luaPrintFn(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) {
+function luaGetMetatable(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) {
+    const object = args.get('object') ?? toLuaValue(null);
+
+    if (!object.metatable) {
+        return toLuaValue(null);
+    }
+
+    if (object.metatable.jsValue.has(toLuaValue('__metatable'))) {
+        return object.metatable.jsValue.get(toLuaValue('__metatable'))!;
+    }
+
+    return object.metatable;
+}
+
+function luaPrint(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) {
     const convertedVarargs: LuaString[] = [];
     for (const v of varargs) {
         convertedVarargs.push(luaToString(scope, new Map([['v', v]]), []));
@@ -66,16 +80,72 @@ function luaPrintFn(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaVa
     return toLuaValue(null);
 }
 
+function luaRawGet(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) {
+    const table = args.get('table') ?? toLuaValue(null);
+    const index = args.get('index') ?? toLuaValue(null);
+
+    if (table.type !== LuaType.Table) {
+        throw new Error(`bad argument #1 to 'rawget' (table expected, got ${table.type})`);
+    }
+
+    if (index.type === LuaType.Nil) {
+        throw new Error(`bad argument #2 to 'rawget' (value expected, got nil)`);
+    }
+
+    return table.jsValue.get(index) ?? toLuaValue(null);
+}
+
+function luaRawSet(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) {
+    const table = args.get('table') ?? toLuaValue(null);
+    const index = args.get('index') ?? toLuaValue(null);
+    const value = args.get('value') ?? toLuaValue(null);
+
+    if (table.type !== LuaType.Table) {
+        throw new Error(`bad argument #1 to 'rawset' (table expected, got ${table.type})`);
+    }
+
+    if (index.type === LuaType.Nil) {
+        throw new Error(`bad argument #2 to 'rawset' (value expected, got ${index.type})`);
+    }
+
+    table.jsValue.set(index, value);
+
+    return table;
+}
+
+function luaSetMetatable(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) {
+    const table = args.get('table') ?? toLuaValue(null);
+    const metatable = args.get('metatable') ?? toLuaValue(null);
+
+    if (table.type !== LuaType.Table) {
+        throw new Error(`bad argument #1 to 'setmetatable' (nil or table expected, got ${table.type})`);
+    }
+
+    if (metatable.type === LuaType.Nil) {
+        table.metatable = undefined;
+    } else if (metatable.type === LuaType.Table) {
+        if (table.metatable?.jsValue.has(toLuaValue('__metatable'))) {
+            throw new Error('cannot change a protected metatable');
+        }
+
+        table.metatable = metatable;
+    } else {
+        throw new Error(`bad argument #2 to 'setmetatable' (nil or table expected, got ${metatable.type})`);
+    }
+
+    return table;
+}
+
 function luaToNumber(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) {
     const e = args.get('e') ?? toLuaValue(null);
     const base = args.get('base') ?? toLuaValue(null);
 
     if (e.type !== LuaType.Number && e.type !== LuaType.String) {
-        throw new Error('bad argument #1 to \'tonumber\' (number expected, got ' + e.type + ')');
+        throw new Error(`bad argument #1 to 'tonumber' (number expected, got ${e.type})`);
     }
 
     if (base.type !== LuaType.Number && base.type !== LuaType.Nil) {
-        throw new Error('bad argument #2 to \'tonumber\' (number expected, got ' + base.type + ')');
+        throw new Error(`bad argument #2 to 'tonumber' (number expected, got ${base.type})`);
     }
 
     if (base.type === LuaType.Nil) {
@@ -140,10 +210,30 @@ assertFunction.name = 'assert';
 assertFunction.arguments = ['v', 'message'];
 luaStandardLibrary.set(toLuaValue(assertFunction.name), assertFunction);
 
-const printFunction = toLuaValue(luaPrintFn);
+const getmetatableFunction = toLuaValue(luaGetMetatable);
+getmetatableFunction.name = 'getmetatable';
+getmetatableFunction.arguments = ['object'];
+luaStandardLibrary.set(toLuaValue(getmetatableFunction.name), getmetatableFunction);
+
+const printFunction = toLuaValue(luaPrint);
 printFunction.name = 'print';
 printFunction.arguments = ['...'];
 luaStandardLibrary.set(toLuaValue(printFunction.name), printFunction);
+
+const rawgetFunction = toLuaValue(luaRawGet);
+rawgetFunction.name = 'rawget';
+rawgetFunction.arguments = ['table', 'index'];
+luaStandardLibrary.set(toLuaValue(rawgetFunction.name), rawgetFunction);
+
+const rawsetFunction = toLuaValue(luaRawSet);
+rawsetFunction.name = 'rawset';
+rawsetFunction.arguments = ['table', 'index', 'value'];
+luaStandardLibrary.set(toLuaValue(rawsetFunction.name), rawsetFunction);
+
+const setmetatableFunction = toLuaValue(luaSetMetatable);
+setmetatableFunction.name = 'setmetatable';
+setmetatableFunction.arguments = ['table', 'metatable'];
+luaStandardLibrary.set(toLuaValue(setmetatableFunction.name), setmetatableFunction);
 
 const tonumberFunction = toLuaValue(luaToNumber);
 tonumberFunction.name = 'tonumber';

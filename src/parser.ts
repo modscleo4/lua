@@ -33,6 +33,7 @@ type Syntax = {
     explist: GrammarSymbol[][];
     exp: GrammarSymbol[][];
     prefixexp: GrammarSymbol[][];
+    suffixexp: GrammarSymbol[][];
     functioncall: GrammarSymbol[][];
     args: GrammarSymbol[][];
     functiondef: GrammarSymbol[][];
@@ -351,6 +352,16 @@ const syntax: Syntax = {
     ],
 
     /**
+     * { '.' NAME | '[' exp ']' | ':' NAME funcargs | funcargs }
+     */
+    suffixexp: [
+        [new Terminal({ type: 'separator', value: '.' }), new Terminal({ type: 'identifier' })],
+        [new Terminal({ type: 'separator', value: '[' }), new NonTerminal('exp'), new Terminal({ type: 'separator', value: ']' })],
+        [new Terminal({ type: 'separator', value: ':' }), new Terminal({ type: 'identifier' }), new NonTerminal('args')],
+        [new NonTerminal('args')],
+    ],
+
+    /**
      * functioncall ::=  prefixexp args | prefixexp ‘:’ Name args
      */
     functioncall: [
@@ -465,8 +476,10 @@ const syntax: Syntax = {
 };
 
 function precedence(operator: Token): number {
-    if (operator.type !== 'operator' && (operator.type === 'reserved' && operator.value !== 'AND' && operator.value !== 'OR' && operator.value !== 'NOT')) {
-        console.log(operator);
+    if (
+        operator.type !== 'operator'
+        && (operator.type === 'reserved' && operator.value !== 'AND' && operator.value !== 'OR' && operator.value !== 'NOT')
+    ) {
         throw new Error(`Expected operator, got ${operator.type}`);
     }
 
@@ -520,7 +533,7 @@ export type AbstractSyntaxTree = {
     token: Token;
 };
 
-function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], reversed: boolean = false): {
+type ParsingResult = {
     matches: false;
     parsedTokens: number;
     error: string;
@@ -530,7 +543,21 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
         parsedTokens: number;
         children: AbstractSyntaxTree[];
     }[];
-} {
+};
+
+type RuleParsingResult = {
+    matches: false;
+    parsedTokens: number;
+    error: string;
+} | {
+    matches: true;
+    tries: {
+        parsedTokens: number;
+        tree: AbstractSyntaxTree;
+    }[];
+};
+
+function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], parsingCache: Map<keyof Syntax, Map<number, RuleParsingResult>> = new Map(), reversed: boolean = false): ParsingResult {
     const tries: {
         failed: boolean;
         error?: string;
@@ -566,7 +593,7 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
                 currTry.j++;
             } else if (grammarSymbol instanceof NonTerminal) {
                 // Non-terminal, check if the rule matches
-                const matchingResult = ruleMatches(grammarSymbol.rule, tokens, currTry.j, stack, reversed);
+                const matchingResult = ruleMatches(grammarSymbol.rule, tokens, currTry.j, stack, parsingCache, reversed);
                 if (!matchingResult.matches) {
                     currTry.failed = true;
                     currTry.error = matchingResult.error;
@@ -585,7 +612,7 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
 
                 currTry.j += matchingResult.tries[0].parsedTokens; // Skip the tokens that were matched
             } else if (grammarSymbol instanceof Optional) {
-                const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, currTry.j, stack, reversed);
+                const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, currTry.j, stack, parsingCache, reversed);
                 if (!matchingResult.matches) {
                     continue;
                 }
@@ -606,11 +633,11 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
                     currTry.children.push(p);
                 }
             } else if (grammarSymbol instanceof Repeating) {
-                const repeatingTries = [currTry];
+                const repeatingTries = [{ ...currTry }];
                 for (let l = 0; l < repeatingTries.length; l++) {
                     const ct = repeatingTries[l];
                     while (true) {
-                        const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, ct.j, stack, reversed);
+                        const matchingResult = tokensMatchSymbols(grammarSymbol.symbols, tokens, ct.j, stack, parsingCache, reversed);
                         if (!matchingResult.matches) {
                             break;
                         }
@@ -651,17 +678,12 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
     return { matches: true, tries: tries.filter(t => !t.failed).map(t => ({ parsedTokens: t.j - i, children: t.children })) };
 }
 
-function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], reversed: boolean = false): {
-    matches: false;
-    parsedTokens: number;
-    error: string;
-} | {
-    matches: true;
-    tries: {
-        parsedTokens: number;
-        tree: AbstractSyntaxTree;
-    }[];
-} {
+function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], parsingCache: Map<keyof Syntax, Map<number, RuleParsingResult>> = new Map(), reversed: boolean = false): RuleParsingResult {
+    if (reversed && parsingCache.get(rule)!.has(i)) {
+        //console.log(`returning parsing result from cache: rule = ${rule}, i = ${i}`);
+        return parsingCache.get(rule)!.get(i)!;
+    }
+
     const tries: {
         parsedTokens: number;
         tree: AbstractSyntaxTree;
@@ -680,7 +702,7 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
 
         try {
             const symbols = parserRules[j];
-            const matchingResult = tokensMatchSymbols(symbols, tokens, i, stack, reversed);
+            const matchingResult = tokensMatchSymbols(symbols, tokens, i, stack, parsingCache, reversed);
             if (!matchingResult.matches) {
                 if (matchingResult.parsedTokens > maxParsed || maxParsed === 0) {
                     maxParsed = matchingResult.parsedTokens;
@@ -697,28 +719,46 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
                 });
             }
 
-            if (((rule === 'functioncall') || (rule === 'prefixexp' && (j === 0 || j === 1))) && !reversed) { // prefixexp is left-recursive, also try to parse from the right
-                let _i = tokens.length - 1;
-                while (_i > i) {
-                    const reversedMatchingResult = tokensMatchSymbols(symbols, tokens, tokens.length - 1 - _i, [], true);
-                    if (reversedMatchingResult.matches) {
-                        for (const t of reversedMatchingResult.tries) {
-                            if (
-                                _i - t.parsedTokens + 1 !== i // must start at the same token
-                                || tries.filter(tr => tr.parsedTokens === t.parsedTokens).length > 0 // must not be a duplicate
-                            ) {
-                                continue;
+            if (((rule === 'functioncall') || (rule === 'var') || (rule === 'exp' && j === 7)) && !reversed) { // prefixexp is left-recursive, also try to parse from the right
+                const maxI = i + tries[0].parsedTokens;
+                if (maxI < tokens.length - 1) { // if there's any token left
+                    let _i = i;
+                    while (true) { // parse the max suffixexp possible to determine the final position for _i
+                        let k = 0;
+                        for (; k < syntax.suffixexp.length; k++) {
+                            const mr = tokensMatchSymbols(syntax.suffixexp[k], tokens, _i + 1, [], parsingCache);
+                            if (mr.matches) {
+                                _i += mr.tries[0].parsedTokens;
+                                break;
                             }
+                        }
 
-                            tries.push({
-                                parsedTokens: t.parsedTokens,
-                                tree: { type: rule, children: t.children.reverse() }
-                            });
-                            continue outer;
+                        if (k === syntax.suffixexp.length) {
+                            break;
                         }
                     }
 
-                    _i--;
+                    while (_i > i) {
+                        const reversedMatchingResult = tokensMatchSymbols(symbols, tokens, tokens.length - 1 - _i, [], parsingCache, true);
+                        if (reversedMatchingResult.matches) {
+                            for (const t of reversedMatchingResult.tries) {
+                                if (
+                                    _i - t.parsedTokens + 1 !== i // must start at the same token
+                                    || tries.filter(tr => tr.parsedTokens === t.parsedTokens).length > 0 // must not be a duplicate
+                                ) {
+                                    continue;
+                                }
+
+                                tries.push({
+                                    parsedTokens: t.parsedTokens,
+                                    tree: { type: rule, children: t.children.reverse() }
+                                });
+                                continue outer;
+                            }
+                        }
+
+                        _i--;
+                    }
                 }
             }
         } finally {
@@ -727,7 +767,12 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
     }
 
     if (tries.length === 0) {
-        return { matches: false, parsedTokens: maxParsed, error };
+        const res: RuleParsingResult = { matches: false, parsedTokens: maxParsed, error };
+        if (reversed) {
+            parsingCache.get(rule)!.set(i, res);
+        }
+
+        return res;
     }
 
     tries.sort((a, b) => b.parsedTokens - a.parsedTokens);
@@ -742,7 +787,12 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
         }
     }
 
-    return { matches: true, tries };
+    const res: RuleParsingResult = { matches: true, tries };
+    if (reversed) {
+        parsingCache.get(rule)!.set(i, res);
+    }
+
+    return res;
 }
 
 function fixOperatorPrecedence(tree: AbstractSyntaxTree): AbstractSyntaxTree {
@@ -902,7 +952,12 @@ function fixOperatorPrecedence(tree: AbstractSyntaxTree): AbstractSyntaxTree {
 export function parser(tokens: Token[]): {
     tree: AbstractSyntaxTree;
 } {
-    const parsed = ruleMatches('chunk', tokens, 0, [], false);
+    const parsingCache: Map<keyof Syntax, Map<number, RuleParsingResult>> = new Map();
+    for (const k in syntax) {
+        parsingCache.set(k as keyof Syntax, new Map());
+    }
+
+    const parsed = ruleMatches('chunk', tokens, 0, [], parsingCache, false);
     if (!parsed.matches) {
         throw new Error(parsed.error);
     }

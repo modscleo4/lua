@@ -30,26 +30,31 @@ export enum LuaType {
 export type LuaNil = {
     type: LuaType.Nil;
     jsValue: null;
+    metatable?: LuaTable;
 };
 
 export type LuaBoolean = {
     type: LuaType.Boolean;
     jsValue: boolean;
+    metatable?: LuaTable;
 };
 
 export type LuaNumber = {
     type: LuaType.Number;
     jsValue: number;
+    metatable?: LuaTable;
 };
 
 export type LuaString = {
     type: LuaType.String;
     jsValue: string;
+    metatable?: LuaTable;
 };
 
 export type LuaTable = {
     type: LuaType.Table;
     jsValue: Map<LuaValue, LuaValue>;
+    metatable?: LuaTable;
 };
 
 export type LuaFunction = {
@@ -58,16 +63,19 @@ export type LuaFunction = {
     arguments: string[];
     scope?: LuaScope;
     jsValue: LuaFunctionWrapper;
+    metatable?: LuaTable;
 };
 
 export type LuaUserdata = {
     type: LuaType.Userdata;
     jsValue: unknown;
+    metatable?: LuaTable;
 };
 
 export type LuaThread = {
     type: LuaType.Thread;
     jsValue: unknown;
+    metatable?: LuaTable;
 };
 
 export class LuaScope extends Map<LuaValue, LuaValue> {
@@ -129,6 +137,23 @@ export class LuaScope extends Map<LuaValue, LuaValue> {
         }
 
         return false;
+    }
+
+    closeVariables() {
+        const keys = [...this.keys()].reverse();
+        // call __close metamethod for each variable in reverse order
+        for (const key of keys) {
+            const value = this.get(key)!;
+
+            // Call __close metamethod
+            const metatable = value.metatable;
+            if (metatable) {
+                const close = metatable.jsValue.get(toLuaValue('__close')) as LuaFunction | undefined;
+                if (close) {
+                    close.jsValue(this, new Map(), []);
+                }
+            }
+        }
     }
 };
 
