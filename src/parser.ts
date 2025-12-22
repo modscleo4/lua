@@ -16,6 +16,8 @@
  * @author Dhiego Cassiano Fogaça Barbosa <modscleo4@outlook.com>
  */
 
+import { GrammarSymbol, NonTerminal, Optional, Repeating, Terminal } from "./grammar.js";
+import { precedence } from "./operator-precedence.js";
 import { Token } from "./tokenizer.js";
 
 type Syntax = {
@@ -33,7 +35,6 @@ type Syntax = {
     explist: GrammarSymbol[][];
     exp: GrammarSymbol[][];
     prefixexp: GrammarSymbol[][];
-    suffixexp: GrammarSymbol[][];
     functioncall: GrammarSymbol[][];
     args: GrammarSymbol[][];
     functiondef: GrammarSymbol[][];
@@ -47,147 +48,6 @@ type Syntax = {
     unop: GrammarSymbol[][];
 };
 
-export interface GrammarSymbol {
-    equals(other: GrammarSymbol): boolean;
-}
-
-/**
- * A terminal is a token that is expected to be found in the code.
- */
-export class Terminal implements GrammarSymbol {
-    #token: Partial<Token>;
-
-    constructor(token: Partial<Token>) {
-        this.#token = token;
-    }
-
-    get token() {
-        return this.#token;
-    }
-
-    equals(other: GrammarSymbol): boolean {
-        if (!(other instanceof Terminal)) {
-            return false;
-        }
-
-        for (const prop in this.token) {
-            if (!other.token.hasOwnProperty(prop) || this.token[prop as keyof typeof this.token] !== other.token[prop as keyof typeof other.token]) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    toString() {
-        return '‘' + JSON.stringify(this.token) + '’';
-    }
-}
-
-/**
- * A non-terminal is a rule that is expected to be found in the code.
- */
-export class NonTerminal implements GrammarSymbol {
-    #rule: keyof Syntax;
-
-    constructor(rule: keyof Syntax) {
-        this.#rule = rule;
-    }
-
-    get rule() {
-        return this.#rule;
-    }
-
-    equals(other: GrammarSymbol): boolean {
-        if (!(other instanceof NonTerminal)) {
-            return false;
-        }
-
-        return this.rule === other.rule;
-    }
-
-    toString() {
-        return this.rule;
-    }
-}
-
-/**
- * A repeating is a list of symbols that are expected to be found in the code.
- */
-export class Repeating implements GrammarSymbol {
-    #symbols: GrammarSymbol[];
-
-    constructor(symbols: GrammarSymbol[]) {
-        this.#symbols = symbols;
-    }
-
-    get symbols() {
-        return this.#symbols;
-    }
-
-    equals(other: GrammarSymbol): boolean {
-        if (!(other instanceof Repeating)) {
-            return false;
-        }
-
-        if (this.symbols.length !== other.symbols.length) {
-            return false;
-        }
-
-        for (let i = 0; i < this.symbols.length; i++) {
-            if (!this.symbols[i].equals(other.symbols[i])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    toString() {
-        return `{${this.symbols.join(', ')}}`;
-    }
-}
-
-/**
- * An optional is a list of symbols that are expected to be found in the code.
- */
-export class Optional implements GrammarSymbol {
-    #symbols: GrammarSymbol[];
-
-    constructor(symbols: GrammarSymbol[]) {
-        if (!Array.isArray(symbols)) {
-            throw new Error('symbols must be an array');
-        }
-
-        this.#symbols = symbols;
-    }
-
-    get symbols() {
-        return this.#symbols;
-    }
-
-    equals(other: GrammarSymbol): boolean {
-        if (!(other instanceof Optional)) {
-            return false;
-        }
-
-        if (this.symbols.length !== other.symbols.length) {
-            return false;
-        }
-
-        for (let i = 0; i < this.symbols.length; i++) {
-            if (!this.symbols[i].equals(other.symbols[i])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    toString() {
-        return `[${this.symbols.join(', ')}]`;
-    }
-}
 
 export class ParsingError extends Error {
     #grammarSymbol: GrammarSymbol;
@@ -352,16 +212,6 @@ const syntax: Syntax = {
     ],
 
     /**
-     * { '.' NAME | '[' exp ']' | ':' NAME funcargs | funcargs }
-     */
-    suffixexp: [
-        [new Terminal({ type: 'separator', value: '.' }), new Terminal({ type: 'identifier' })],
-        [new Terminal({ type: 'separator', value: '[' }), new NonTerminal('exp'), new Terminal({ type: 'separator', value: ']' })],
-        [new Terminal({ type: 'separator', value: ':' }), new Terminal({ type: 'identifier' }), new NonTerminal('args')],
-        [new NonTerminal('args')],
-    ],
-
-    /**
      * functioncall ::=  prefixexp args | prefixexp ‘:’ Name args
      */
     functioncall: [
@@ -475,56 +325,6 @@ const syntax: Syntax = {
     ],
 };
 
-function precedence(operator: Token): number {
-    if (
-        operator.type !== 'operator'
-        && (operator.type === 'reserved' && operator.value !== 'AND' && operator.value !== 'OR' && operator.value !== 'NOT')
-    ) {
-        throw new Error(`Expected operator, got ${operator.type}`);
-    }
-
-    switch (operator.value) {
-        case '^':
-            return 12;
-        case 'NOT':
-        case '#':
-        case '~':
-            return 11;
-        case '*':
-        case '/':
-        case '//':
-        case '%':
-            return 10;
-        case '+':
-        case '-':
-            return 9;
-        case '..':
-            return 8;
-        case '<<':
-        case '>>':
-            return 7;
-        case '&':
-            return 6;
-        case '~':
-            return 5;
-        case '|':
-            return 4;
-        case '<':
-        case '>':
-        case '<=':
-        case '>=':
-        case '~=':
-        case '==':
-            return 3;
-        case 'AND':
-            return 2;
-        case 'OR':
-            return 1;
-    }
-
-    return 0;
-}
-
 export type AbstractSyntaxTree = {
     type: keyof Syntax;
     children: AbstractSyntaxTree[];
@@ -557,7 +357,14 @@ type RuleParsingResult = {
     }[];
 };
 
-function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], parsingCache: Map<keyof Syntax, Map<number, RuleParsingResult>> = new Map(), reversed: boolean = false): ParsingResult {
+function tokensMatchSymbols(
+    symbols: GrammarSymbol[],
+    tokens: Token[],
+    i: number = 0,
+    stack: { rule: keyof Syntax; i: number; j: number; }[] = [],
+    parsingCache: Map<keyof Syntax, Map<number, RuleParsingResult>> = new Map(),
+    reversed: boolean = false
+): ParsingResult {
     const tries: {
         failed: boolean;
         error?: string;
@@ -672,16 +479,33 @@ function tokensMatchSymbols(symbols: GrammarSymbol[], tokens: Token[], i: number
 
     if (tries.filter(t => !t.failed).length === 0) {
         const maxTry = tries[0];
-        return { matches: false, parsedTokens: maxTry.j - i, error: maxTry.error! };
+        return {
+            matches: false,
+            parsedTokens: maxTry.j - i,
+            error: maxTry.error!
+        };
     }
 
-    return { matches: true, tries: tries.filter(t => !t.failed).map(t => ({ parsedTokens: t.j - i, children: t.children })) };
+    return {
+        matches: true,
+        tries: tries.filter(t => !t.failed).map(t => ({ parsedTokens: t.j - i, children: t.children }))
+    };
 }
 
-function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: { rule: keyof Syntax; i: number; j: number; }[] = [], parsingCache: Map<keyof Syntax, Map<number, RuleParsingResult>> = new Map(), reversed: boolean = false): RuleParsingResult {
-    if (reversed && parsingCache.get(rule)!.has(i)) {
-        //console.log(`returning parsing result from cache: rule = ${rule}, i = ${i}`);
-        return parsingCache.get(rule)!.get(i)!;
+function ruleMatches(
+    rule: keyof Syntax,
+    tokens: Token[],
+    i: number = 0,
+    stack: { rule: keyof Syntax; i: number; j: number; }[] = [],
+    parsingCache: Map<keyof Syntax, Map<number, RuleParsingResult>> = new Map(),
+    reversed: boolean = false
+): RuleParsingResult {
+    // Use memoization for both forward and reversed directions.
+    // Store reversed results under negative keys to avoid collisions with forward cache.
+    const cacheMap = parsingCache.get(rule)!;
+    const cacheKey = reversed ? (-i - 1) : i;
+    if (cacheMap.has(cacheKey)) {
+        return cacheMap.get(cacheKey)!;
     }
 
     const tries: {
@@ -719,26 +543,12 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
                 });
             }
 
-            if (((rule === 'functioncall') || (rule === 'var') || (rule === 'exp' && j === 7)) && !reversed) { // prefixexp is left-recursive, also try to parse from the right
+            if (((rule === 'functioncall') || (rule === 'prefixexp' && (j === 0 || j === 1))) && !reversed) { // prefixexp is left-recursive, also try to parse from the right
                 const maxI = i + tries[0].parsedTokens;
                 if (maxI < tokens.length - 1) { // if there's any token left
-                    let _i = i;
-                    while (true) { // parse the max suffixexp possible to determine the final position for _i
-                        let k = 0;
-                        for (; k < syntax.suffixexp.length; k++) {
-                            const mr = tokensMatchSymbols(syntax.suffixexp[k], tokens, _i + 1, [], parsingCache);
-                            if (mr.matches) {
-                                _i += mr.tries[0].parsedTokens;
-                                break;
-                            }
-                        }
+                    let _i = tokens.length - 1;
 
-                        if (k === syntax.suffixexp.length) {
-                            break;
-                        }
-                    }
-
-                    while (_i > i) {
+                    while (_i > maxI) {
                         const reversedMatchingResult = tokensMatchSymbols(symbols, tokens, tokens.length - 1 - _i, [], parsingCache, true);
                         if (reversedMatchingResult.matches) {
                             for (const t of reversedMatchingResult.tries) {
@@ -767,11 +577,10 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
     }
 
     if (tries.length === 0) {
+        // Do not cache failures in forward parsing to avoid interfering with
+        // other derivations (especially around left-recursive patterns).
+        // Reversed parsing remains memoized via the same mechanism when applicable.
         const res: RuleParsingResult = { matches: false, parsedTokens: maxParsed, error };
-        if (reversed) {
-            parsingCache.get(rule)!.set(i, res);
-        }
-
         return res;
     }
 
@@ -788,10 +597,7 @@ function ruleMatches(rule: keyof Syntax, tokens: Token[], i: number = 0, stack: 
     }
 
     const res: RuleParsingResult = { matches: true, tries };
-    if (reversed) {
-        parsingCache.get(rule)!.set(i, res);
-    }
-
+    cacheMap.set(cacheKey, res);
     return res;
 }
 

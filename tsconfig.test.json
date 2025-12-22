@@ -1,0 +1,31 @@
+{
+    "compilerOptions": {
+        "moduleResolution": "Node16",
+        "module": "Node16",
+        "target": "ES2022",
+        "lib": [
+            "ES2022"
+        ],
+        "sourceMap": true,
+        "declaration": true,
+        "stripInternal": true,
+        "strict": true,
+        "alwaysStrict": true,
+        "pretty": true,
+        "experimentalDecorators": true,
+        "outDir": "./test",
+        "skipLibCheck": true,
+        "noImplicitReturns": true,
+        "noImplicitAny": true,
+        "noImplicitOverride": true,
+        "noImplicitThis": true,
+        "strictBindCallApply": true,
+        "strictNullChecks": true
+    },
+    "include": [
+        "src/**/*.spec.ts"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}

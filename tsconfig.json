@@ -1,5 +1,6 @@
 {
     "compilerOptions": {
+        "incremental": true,
         "moduleResolution": "NodeNext",
         "resolveJsonModule": true,
         "module": "NodeNext",

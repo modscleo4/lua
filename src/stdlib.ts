@@ -17,21 +17,18 @@
  */
 
 import {
-    LuaType,
-    LuaNil,
-    LuaBoolean,
-    LuaNumber,
-    LuaString,
-    LuaTable,
-    LuaFunction,
-    LuaUserdata,
-    LuaThread,
-    LuaScope,
-    LuaValue,
-    LuaFunctionWrapper,
     convertToLuaValue,
-    toLuaValue,
+    isFalsyLuaValue,
+    LuaError,
+    LuaScope,
+    LuaString,
+    LuaType,
+    LuaValue,
+    toLuaValue
 } from "./vm.js";
+
+import luaMathLibrary from "./stdlib.math.js";
+import luaOSLibrary from "./stdlib.os.js";
 
 let emitWarning = true;
 
@@ -43,13 +40,13 @@ function luaAssert(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaVal
     const v = args.get('v') ?? toLuaValue(null);
     const message = args.get('message');
 
-    if (v.type === LuaType.Nil || v.type === LuaType.Boolean && !v.jsValue) {
+    if (isFalsyLuaValue(v)) {
         let msg = 'assertion failed!';
         if (message && message.type === LuaType.String) {
             msg = message.jsValue;
         }
 
-        throw new Error(msg);
+        throw new LuaError(msg);
     }
 
     return toLuaValue(null);
@@ -85,11 +82,11 @@ function luaRawGet(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaVal
     const index = args.get('index') ?? toLuaValue(null);
 
     if (table.type !== LuaType.Table) {
-        throw new Error(`bad argument #1 to 'rawget' (table expected, got ${table.type})`);
+        throw new LuaError(`bad argument #1 to 'rawget' (table expected, got ${table.type})`);
     }
 
     if (index.type === LuaType.Nil) {
-        throw new Error(`bad argument #2 to 'rawget' (value expected, got nil)`);
+        throw new LuaError(`bad argument #2 to 'rawget' (value expected, got nil)`);
     }
 
     return table.jsValue.get(index) ?? toLuaValue(null);
@@ -101,11 +98,11 @@ function luaRawSet(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaVal
     const value = args.get('value') ?? toLuaValue(null);
 
     if (table.type !== LuaType.Table) {
-        throw new Error(`bad argument #1 to 'rawset' (table expected, got ${table.type})`);
+        throw new LuaError(`bad argument #1 to 'rawset' (table expected, got ${table.type})`);
     }
 
     if (index.type === LuaType.Nil) {
-        throw new Error(`bad argument #2 to 'rawset' (value expected, got ${index.type})`);
+        throw new LuaError(`bad argument #2 to 'rawset' (value expected, got ${index.type})`);
     }
 
     table.jsValue.set(index, value);
@@ -118,19 +115,19 @@ function luaSetMetatable(scope: LuaScope, args: Map<string, LuaValue>, varargs: 
     const metatable = args.get('metatable') ?? toLuaValue(null);
 
     if (table.type !== LuaType.Table) {
-        throw new Error(`bad argument #1 to 'setmetatable' (nil or table expected, got ${table.type})`);
+        throw new LuaError(`bad argument #1 to 'setmetatable' (nil or table expected, got ${table.type})`);
     }
 
     if (metatable.type === LuaType.Nil) {
         table.metatable = undefined;
     } else if (metatable.type === LuaType.Table) {
         if (table.metatable?.jsValue.has(toLuaValue('__metatable'))) {
-            throw new Error('cannot change a protected metatable');
+            throw new LuaError('cannot change a protected metatable');
         }
 
         table.metatable = metatable;
     } else {
-        throw new Error(`bad argument #2 to 'setmetatable' (nil or table expected, got ${metatable.type})`);
+        throw new LuaError(`bad argument #2 to 'setmetatable' (nil or table expected, got ${metatable.type})`);
     }
 
     return table;
@@ -141,11 +138,11 @@ function luaToNumber(scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaV
     const base = args.get('base') ?? toLuaValue(null);
 
     if (e.type !== LuaType.Number && e.type !== LuaType.String) {
-        throw new Error(`bad argument #1 to 'tonumber' (number expected, got ${e.type})`);
+        throw new LuaError(`bad argument #1 to 'tonumber' (number expected, got ${e.type})`);
     }
 
     if (base.type !== LuaType.Number && base.type !== LuaType.Nil) {
-        throw new Error(`bad argument #2 to 'tonumber' (number expected, got ${base.type})`);
+        throw new LuaError(`bad argument #2 to 'tonumber' (number expected, got ${base.type})`);
     }
 
     if (base.type === LuaType.Nil) {
@@ -254,5 +251,8 @@ const warnFunction = toLuaValue(luaWarn);
 warnFunction.name = 'warn';
 warnFunction.arguments = ['msg1', '...'];
 luaStandardLibrary.set(toLuaValue(warnFunction.name), warnFunction);
+
+luaStandardLibrary.set(toLuaValue('math'), convertToLuaValue(luaMathLibrary));
+luaStandardLibrary.set(toLuaValue('os'), convertToLuaValue(luaOSLibrary));
 
 export default luaStandardLibrary;

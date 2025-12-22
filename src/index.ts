@@ -17,19 +17,40 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises";
+import { parseArgs } from "node:util";
 
-import { tokenizer } from "./tokenizer.js";
+import { runChunk, stringifyLuaValue } from "./interpreter.js";
 import { ParsingError, parser } from "./parser.js";
-import { LuaScope } from "./vm.js";
-import { runChunk } from "./interpreter.js";
 import luaStandardLibrary from "./stdlib.js";
+import { tokenizer } from "./tokenizer.js";
+import { LuaScope } from "./vm.js";
 
-if (process.argv.length < 3) {
-    console.error('Usage: node dist/index.js <file>');
-    process.exit(1);
+const { positionals, values } = parseArgs({
+    options: {
+        help: {
+            type: 'boolean',
+            short: 'h',
+        },
+        output: {
+            type: 'string',
+            short: 'o',
+        },
+    },
+    allowPositionals: true,
+});
+
+if (values.help || positionals.length === 0) {
+    console.log(`Usage: ${process.argv[1]} [options] <file>
+
+Options:
+  -h, --help            Show this help message
+  -o, --output <dir>    Output directory for tokens.json and ast.json
+`);
+    process.exit(positionals.length === 0 ? 1 : 0);
 }
 
-const filename = process.argv[2];
+const filename = positionals[0];
+const outputDir = values.output ?? '.';
 
 const code = await readFile(filename, 'utf8');
 
@@ -39,7 +60,7 @@ try {
     const resultTokensFiltered = resultTokens.filter(token => token.type !== 'comment' && (token.type !== 'separator' || token.additional !== 'whitespace'));
     console.log(`Tokenization took ${performance.now() - tokenizationStart}ms`);
 
-    writeFile('tokens.json', JSON.stringify(resultTokensFiltered, null, 2), 'utf8');
+    writeFile(`${outputDir}/tokens.json`, JSON.stringify(resultTokensFiltered, null, 2), 'utf8');
 
     const parsingStart = performance.now();
     const parserResult = {
@@ -50,7 +71,7 @@ try {
     };
     console.log(`Parsing took ${performance.now() - parsingStart}ms`);
 
-    writeFile('ast.json', JSON.stringify(parserResult, null, 2), 'utf8');
+    writeFile(`${outputDir}/ast.json`, JSON.stringify(parserResult, null, 2), 'utf8');
 
     const globalScope = new LuaScope();
     for (const [key, value] of luaStandardLibrary) {
@@ -60,7 +81,7 @@ try {
     console.log('Interpreting...');
     const interpretingStart = performance.now();
     const ret = runChunk(parserResult.body.tree, globalScope);
-    console.log(`File ${filename} returned ${JSON.stringify(ret)} after ${performance.now() - interpretingStart}ms`);
+    console.log(`File ${filename} returned ${stringifyLuaValue(ret)} after ${performance.now() - interpretingStart}ms`);
 } catch (e) {
     if (e instanceof ParsingError) {
         console.error(e.message, e.grammarSymbol.toString(), e.token);

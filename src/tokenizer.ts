@@ -20,7 +20,7 @@
  * Tokens for Lua
  */
 const tokens = {
-    reserved: [
+    reserved: new Set([
         'AND',
         'BREAK',
         'DO',
@@ -42,11 +42,11 @@ const tokens = {
         'TRUE',
         'UNTIL',
         'WHILE',
-    ],
+    ]),
     identifiers: [
-        /^([a-zA-Z_][a-zA-Z0-9_]*)$/,
+        /([a-zA-Z_][a-zA-Z0-9_]*)/y,
     ],
-    operators: [
+    operators: new Set([
         '=',
 
         '~=',
@@ -75,14 +75,14 @@ const tokens = {
         '..',
 
         '...',
-    ],
-    whitespace: [
+    ]),
+    whitespace: new Set([
         ' ',
         '\t',
         '\n',
         '\r',
-    ],
-    separators: [
+    ]),
+    separators: new Set([
         ' ',
         '\t',
         '\n',
@@ -99,211 +99,182 @@ const tokens = {
         '}',
         '[',
         ']',
-    ],
+    ]),
     constants: [
-        /^'(.+?)?(?=')'$/,
-        /^"(.+?)?(?=")"$/,
-        /^\[(=*)\[\n?(.+?)?(?=\n?\]\1\])\n?\]\1\]$/s,
+        { regex: /'(.+?)?(?=')'/y, type: 'string', },
+        { regex: /"(.+?)?(?=")"/y, type: 'string', },
+        { regex: /\[(=*)\[\n?(.+?)?(?=\n?\]\1\])\n?\]\1\]/sy, type: 'string', },
 
-        /^(\d+(?:\.\d+)?)$/,
-        /^(\d+(\.\d+)?[eE][+-]?\d+)$/,
-        /^(0x[0-9a-fA-F]+(?:\.[0-9a-fA-F]+)?)$/,
-        /^(0x[0-9a-fA-F]+(\.[0-9a-fA-F]+)?[pP][+-]?[0-9a-fA-F]+)$/,
+        { regex: /(0x[0-9a-fA-F]+(\.[0-9a-fA-F]+)?[pP][+-]?[0-9a-fA-F]+)/y, type: 'number', },
+        { regex: /(0x[0-9a-fA-F]+(?:\.[0-9a-fA-F]+)?)/y, type: 'number', },
+        { regex: /(\d+(\.\d+)?[eE][+-]?\d+)/y, type: 'number', },
+        { regex: /(\d+(?:\.\d+)?)/y, type: 'number', },
     ],
     comments: [
-        /^--\[(=*)\[\n?(.+?)?(?=\n?\]\1\])\n?\]\1\]$/s,
-        /^--(?!\[=*\[)([^\n]*)\n$/,
+        /--\[(=*)\[\n?(.+?)?(?=\n?\]\1\])\n?\]\1\]/sy,
+        /--(?!\[=*\[)([^\n]*)\n/y,
     ],
 };
 
-function constantType(str: string): string | null {
-    const types = {
-        'string': [
-            /^'(.+?)?(?=')'$/,
-            /^"(.+?)?(?=")"$/,
-            /^\[(=*)\[\n?(.+?)?(?=\n?\]\1\])\n?\]\1\]$/s,
-        ],
-        'number': [
-            /^([-]?\d+(?:\.\d+)?)$/,
-            /^(\d+(\.\d+)?[eE][-]?\d+)$/,
-            /^(0x[0-9a-fA-F]+)$/,
-        ],
-    };
+// Precompute operator greedy matcher (3 -> 2 -> 1 chars) without regex
+const operatorSet = tokens.operators;
+const operatorMaxLen = 3;
+function matchOperatorAt(code: string, pos: number): string | null {
+    for (let len = operatorMaxLen; len >= 1; len--) {
+        if (pos + len > code.length) continue;
+        const slice = code.substring(pos, pos + len);
+        if (operatorSet.has(slice.toUpperCase())) return slice;
+    }
+    return null;
+}
 
-    for (const type in types) {
-        for (const regex of types[type as keyof typeof types]) {
-            if (regex.test(str)) {
-                return type;
-            }
-        }
+// Greedy separator matcher: currently supports multi-char '::' plus single-char set.
+const separatorSet = tokens.separators;
+function matchSeparatorAt(code: string, pos: number): string | null {
+    if (pos + 2 <= code.length) {
+        const two = code.substring(pos, pos + 2);
+        if (separatorSet.has(two)) return two;
     }
 
+    const one = code[pos];
+    if (separatorSet.has(one)) return one;
     return null;
 }
 
 export type Token = {
     type: 'comment' | 'operator' | 'constant' | 'reserved' | 'identifier' | 'separator' | 'EOF',
+    // The actual matched string from source
     match: string,
+    // The normalized/processed value
     value: string,
+    // Extra info like 'whitespace' for separators or type for constants
     additional: string | null,
     line?: number,
     column?: number,
 };
 
-function tokenize(str: string, { comments = true, operators = true, constants = true, reserved = true, identifiers = true, separators = true } = {}): Token | null {
-    if (comments && tokens.comments.some(regex => regex.test(str))) {
-        const regex = tokens.comments.find(regex => regex.test(str))!;
-        const regexMatch = str.match(regex)!;
-
-        return {
-            type: 'comment',
-            match: str,
-            value: regexMatch[2] ?? regexMatch[1],
-            additional: regexMatch[2] === undefined ? null : regexMatch[1],
-        };
-    } else if (operators && tokens.operators.includes(str.toUpperCase())) {
-        return {
-            type: 'operator',
-            match: str,
-            value: str.toUpperCase(),
-            additional: null,
-        };
-    } else if (constants && tokens.constants.some(regex => regex.test(str))) {
-        const regex = tokens.constants.find(regex => regex.test(str))!;
-        const regexMatch = str.match(regex)!;
-
-        return {
-            type: 'constant',
-            match: str,
-            value: regexMatch[2] ?? regexMatch[1],
-            additional: constantType(str),
-        };
-    } else if (reserved && tokens.reserved.includes(str.toUpperCase())) {
-        return {
-            type: 'reserved',
-            match: str,
-            value: str.toUpperCase(),
-            additional: null,
-        };
-    } else if (identifiers && tokens.identifiers.some(regex => regex.test(str))) {
-        const regex = tokens.identifiers.find(regex => regex.test(str))!;
-        const regexMatch = str.match(regex)!;
-
-        return {
-            type: 'identifier',
-            match: str,
-            value: regexMatch[1],
-            additional: null,
-        };
-    } else if (separators && tokens.separators.includes(str)) {
-        return {
-            type: 'separator',
-            match: str,
-            value: str,
-            additional: tokens.whitespace.includes(str) ? 'whitespace' : null,
-        };
-    } else {
-        return null;
-    }
-}
-
-function tryTokenize(code: string, lastI: number, i: number, k: number = 1, tokenizerOptions = {}): { result: Token | null, search: string, k: number; } {
-    let search = code.substring(lastI, i + k);
-    let result;
-
-    while (!(result = tokenize(search, tokenizerOptions)) && (i + k + 1) <= code.length) {
-        k++;
-        search = code.substring(lastI, i + k);
-    }
-
-    if (result) {
-        while ((result = tokenize(search, tokenizerOptions)) && (i + k + 1) <= code.length) {
-            k++;
-            search = code.substring(lastI, i + k);
-        }
-
-        k--;
-        search = code.substring(lastI, i + k);
-        result = tokenize(search, tokenizerOptions);
-    }
-
-    return { result, search, k };
-}
-
-export function tokenizer(code: string): Token[] {
+export function tokenizer(code: string, includeWhitespace: boolean = false, includeComments: boolean = true): Token[] {
+    // Ensure code ends with newline for patterns relying on trailing \n (e.g., single-line comments)
     code += `\n`;
 
     const resultTokens: Token[] = [];
-
-    let includeWhitespace = false;
-    let includeComments = true;
     let line = 1;
-    let column = 0;
-    let toProcess = 0;
+    let column = 0; // column of last processed char (0-based internal)
 
-    let lastI = 0;
+    // Helper: execute a sticky regex at current position
+    const execSticky = (r: RegExp, pos: number): RegExpExecArray | null => {
+        r.lastIndex = pos;
+        const m = r.exec(code);
+        return m && m.index === pos ? m : null;
+    };
 
-    for (let i = 0; i < code.length - 1; i++) {
-        if (code[i] === '\n' || code[i] === '\r') {
-            line++;
-            column = -1;
+    // Helper: push token and advance position/line/column
+    let i = 0;
+    const pushToken = (t: Omit<Token, 'line' | 'column'>, match: string) => {
+        const token: Token = { ...t, line: line, column: column + 1 };
+        // Apply filters
+        const isWhitespaceSep = token.type === 'separator' && token.additional === 'whitespace';
+        const isComment = token.type === 'comment';
+        if (!(isWhitespaceSep && !includeWhitespace) && !(isComment && !includeComments)) {
+            resultTokens.push(token);
         }
 
-        column++;
+        // Advance accounting
+        for (let k = 0; k < match.length; k++) {
+            const ch = match[k];
+            if (ch === '\n') {
+                line++;
+                column = 0;
+            } else if (ch === '\r') {
+                line++;
+                column = 0;
+            } else {
+                column++;
+            }
+        }
+        i += match.length;
+    };
 
-        if (toProcess > 0) {
-            toProcess--;
+    const isWhitespace = (ch: string) => tokens.whitespace.has(ch);
+    const isSeparator = (ch: string) => tokens.separators.has(ch);
+
+    while (i < code.length - 1) {
+        const startLine = line;
+        const startCol = column + 1;
+
+        // 1) Comments (sticky exec at current index)
+        let matched = false;
+        for (const r of tokens.comments) {
+            const m = execSticky(r, i);
+            if (m) {
+                const matchStr = m[0];
+                const value = (m[2] ?? m[1]) ?? '';
+                const additional = m[2] === undefined ? null : (m[1] ?? null);
+                pushToken({ type: 'comment', match: matchStr, value, additional }, matchStr);
+                matched = true;
+                break;
+            }
+        }
+        if (matched) continue;
+
+        const ch = code[i];
+
+        // 2) Whitespace separators (single char)
+        if (isWhitespace(ch)) {
+            pushToken({ type: 'separator', match: ch, value: ch, additional: 'whitespace' }, ch);
             continue;
         }
 
-        let result;
-        let search = '';
-        let k = 1;
-
-        ({ result, search, k } = tryTokenize(code, lastI, i, k, { comments: true, operators: false, constants: false, reserved: false, identifiers: false, separators: false }));
-
-        if (!result) {
-            k = 1;
-            ({ result, search, k } = tryTokenize(code, lastI, i, k, { comments: false, operators: true, constants: true, reserved: true, identifiers: false, separators: false }));
+        // 3) Operators (longest-first)
+        const op = matchOperatorAt(code, i);
+        if (op) {
+            pushToken({ type: 'operator', match: op, value: op.toUpperCase(), additional: null }, op);
+            continue;
         }
 
-        if (!result || result.type === 'reserved') {
-            let oldResult = result;
-            let oldK = k;
-
-            k = (!result) ? 1 : k + 1;
-
-            ({ result, search, k } = tryTokenize(code, lastI, i, k, { comments: false, operators: false, constants: false, reserved: false, identifiers: true, separators: false }));
-
-            if (!result) {
-                result = oldResult;
+        // 4) Constants (numbers/strings)
+        for (const { regex, type } of tokens.constants) {
+            const m = execSticky(regex, i);
+            if (m) {
+                const matchStr = m[0];
+                const value = (m[2] ?? m[1]) ?? '';
+                pushToken({ type: 'constant', match: matchStr, value, additional: type }, matchStr);
+                matched = true;
+                break;
             }
         }
+        if (matched) continue;
 
-        if (!result) {
-            k = 1;
-            ({ result, search, k } = tryTokenize(code, lastI, i, k, { comments: false, operators: false, constants: false, reserved: false, identifiers: false, separators: true }));
-        }
-
-        if (!result) {
-            console.error(resultTokens);
-            throw new Error(`Token unknown at line ${line}, column ${column}: '${search}'`);
-        } else {
-            if (!includeWhitespace && result.type === 'separator' && result.additional === 'whitespace') {
-                // continue;
-            } else if (!includeComments && result.type === 'comment') {
-                // continue;
-            } else {
-                resultTokens.push({ ...result, line, column });
+        // 5) Identifiers / Reserved words
+        for (const r of tokens.identifiers) {
+            const m = execSticky(r, i);
+            if (m) {
+                const matchStr = m[0];
+                const id = m[1];
+                const upper = id.toUpperCase();
+                if (tokens.reserved.has(upper)) {
+                    pushToken({ type: 'reserved', match: matchStr, value: upper, additional: null }, matchStr);
+                } else {
+                    pushToken({ type: 'identifier', match: matchStr, value: id, additional: null }, matchStr);
+                }
+                matched = true;
+                break;
             }
-
-            toProcess = result.match.length - 1;
-
-            lastI = i + result.match.length;
         }
+        if (matched) continue;
+
+        // 6) Separators (punctuation/brackets; greedy for multi-char like '::')
+        const sep = matchSeparatorAt(code, i);
+        if (sep) {
+            pushToken({ type: 'separator', match: sep, value: sep, additional: tokens.whitespace.has(sep) ? 'whitespace' : null }, sep);
+            continue;
+        }
+
+        // Unknown token at this position
+        throw new Error(`Token unknown at line ${startLine}, column ${startCol}: '${code[i]}'`);
     }
 
+    // EOF marker
     resultTokens.push({ type: 'EOF', match: '', value: 'EOF', additional: null, line, column });
-
     return resultTokens;
 }

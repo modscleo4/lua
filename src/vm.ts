@@ -74,7 +74,7 @@ export type LuaUserdata = {
 
 export type LuaThread = {
     type: LuaType.Thread;
-    jsValue: unknown;
+    jsValue: Generator<LuaValue, LuaValue, LuaValue>;
     metatable?: LuaTable;
 };
 
@@ -205,4 +205,16 @@ export function toLuaValue(value: any) {
     const luaValue = convertToLuaValue(value);
     luaValueCache.set(value, luaValue);
     return luaValue;
+}
+
+export function isFalsyLuaValue(value: LuaValue): boolean {
+    return value.type === LuaType.Nil || (value.type === LuaType.Boolean && value.jsValue === false);
+}
+
+export function isTruthyLuaValue(value: LuaValue): boolean {
+    return !isFalsyLuaValue(value);
+}
+
+export class LuaError extends Error {
+
 }

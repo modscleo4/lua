@@ -16,38 +16,23 @@
  * @author Dhiego Cassiano Fogaça Barbosa <modscleo4@outlook.com>
  */
 
+import assert from "node:assert";
+
 import { AbstractSyntaxTree } from "./parser.js";
 import { Token } from "./tokenizer.js";
 
 import {
-    LuaType,
-    LuaNil,
-    LuaBoolean,
-    LuaNumber,
-    LuaString,
-    LuaTable,
+    isFalsyLuaValue,
+    isTruthyLuaValue,
     LuaFunction,
-    LuaUserdata,
-    LuaThread,
     LuaScope,
+    LuaType,
     LuaValue,
-    LuaFunctionWrapper,
-    convertToLuaValue,
-    toLuaValue,
+    toLuaValue
 } from "./vm.js";
 
-function isFalsyLuaValue(value: LuaValue): boolean {
-    return value.type === LuaType.Nil || (value.type === LuaType.Boolean && value.jsValue === false);
-}
-
-function isTruthyLuaValue(value: LuaValue): boolean {
-    return !isFalsyLuaValue(value);
-}
-
 function parseParameterList(parlist: AbstractSyntaxTree): string[] {
-    if (parlist.type !== 'parlist') {
-        throw new Error(`Expected a parlist, got ${parlist.type}`);
-    }
+    assert(parlist.type === 'parlist', `Expected a parlist, got ${parlist.type}`);
 
     const params: string[] = [];
 
@@ -73,15 +58,21 @@ function parseParameterList(parlist: AbstractSyntaxTree): string[] {
 }
 
 function parseFunctionBody(name: string | undefined, funcbody: AbstractSyntaxTree, scope: LuaScope): LuaValue {
-    if (funcbody.type !== 'funcbody') {
-        throw new Error(`Expected a functionbody, got ${funcbody.type}`);
-    }
+    assert(funcbody.type === 'funcbody', `Expected a functionbody, got ${funcbody.type}`);
 
     const args = funcbody.children.length === 4 ? [] : parseParameterList(funcbody.children[1]);
 
     const block = funcbody.children[2 + args.length];
 
-    const luaFunction: LuaFunction = toLuaValue(function (scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) { const fnLocalScope = new LuaScope(scope); for (const [k, v] of args) { fnLocalScope.set(toLuaValue(k), v); } return runBlock(block, fnLocalScope); });
+    const luaFunction: LuaFunction = toLuaValue(function (scope: LuaScope, args: Map<string, LuaValue>, varargs: LuaValue[]) {
+        const fnLocalScope = new LuaScope(scope);
+        for (const [k, v] of args) {
+            fnLocalScope.set(toLuaValue(k), v);
+        }
+
+        return runBlock(block, fnLocalScope);
+    });
+
     luaFunction.name = name;
     luaFunction.arguments = args;
     luaFunction.scope = new LuaScope(scope);
@@ -90,17 +81,13 @@ function parseFunctionBody(name: string | undefined, funcbody: AbstractSyntaxTre
 }
 
 function defineFunction(functiondef: AbstractSyntaxTree, scope: LuaScope): LuaValue {
-    if (functiondef.type !== 'functiondef') {
-        throw new Error(`Expected a functiondef, got ${functiondef.type}`);
-    }
+    assert(functiondef.type === 'functiondef', `Expected a functiondef, got ${functiondef.type}`);
 
     return parseFunctionBody(undefined, functiondef.children[1], scope);
 }
 
 function retrieveFunctionName(funcname: AbstractSyntaxTree): string {
-    if (funcname.type !== 'funcname') {
-        throw new Error(`Expected a funcname, got ${funcname.type}`);
-    }
+    assert(funcname.type === 'funcname', `Expected a funcname, got ${funcname.type}`);
 
     let name = fetchIdentifier(funcname.children[0]);
 
@@ -128,9 +115,7 @@ function defineNamedFunction(funcname: AbstractSyntaxTree, funcbody: AbstractSyn
 }
 
 function constructTable(tableconstructor: AbstractSyntaxTree, scope: LuaScope): LuaValue {
-    if (tableconstructor.type !== 'tableconstructor') {
-        throw new Error(`Expected a tableconstructor, got ${tableconstructor.type}`);
-    }
+    assert(tableconstructor.type === 'tableconstructor', `Expected a tableconstructor, got ${tableconstructor.type}`);
 
     const table: Map<LuaValue, LuaValue> = new Map();
     if (tableconstructor.children.length === 2) {
@@ -138,65 +123,41 @@ function constructTable(tableconstructor: AbstractSyntaxTree, scope: LuaScope): 
     }
 
     const fieldlist = tableconstructor.children[1];
-    if (fieldlist.type !== 'fieldlist') {
-        throw new Error(`Expected a fieldlist, got ${fieldlist.type}`);
-    }
+    assert(fieldlist.type === 'fieldlist', `Expected a fieldlist, got ${fieldlist.type}`);
 
     return toLuaValue(table);
 }
 
 function fetchOperator(operator: AbstractSyntaxTree): Token {
-    if (operator.type !== 'binop' && operator.type !== 'unop') {
-        throw new Error(`Expected a binop or unop, got ${operator.type}`);
-    }
-
-    if (operator.children[0].type !== 'token') {
-        throw new Error(`Expected a token, got ${operator.children[0].type}`);
-    }
+    assert(operator.type === 'binop' || operator.type === 'unop', `Expected a binop or unop, got ${operator.type}`);
+    assert(operator.children[0].type === 'token', `Expected a token, got ${operator.children[0].type}`);
 
     return operator.children[0].token;
 }
 
 function fetchIdentifier(token: AbstractSyntaxTree): string {
-    if (token.type !== 'token') {
-        throw new Error(`Expected a token, got ${token.type}`);
-    }
-
-    if (token.token.type !== 'identifier') {
-        throw new Error(`Expected an identifier, got ${token.token.type}`);
-    }
+    assert(token.type === 'token', `Expected a token, got ${token.type}`);
+    assert(token.token.type === 'identifier', `Expected an identifier, got ${token.token.type}`);
 
     return token.token.value;
 }
 
 function fetchString(token: AbstractSyntaxTree): string {
-    if (token.type !== 'token') {
-        throw new Error(`Expected a token, got ${token.type}`);
-    }
-
-    if (token.token.type !== 'constant' || token.token.additional !== 'string') {
-        throw new Error(`Expected a string, got ${token.token.type}`);
-    }
+    assert(token.type === 'token', `Expected a token, got ${token.type}`);
+    assert(token.token.type === 'constant' && token.token.additional === 'string', `Expected a string, got ${token.token.type}`);
 
     return token.token.value;
 }
 
 function fetchSeparator(token: AbstractSyntaxTree): string {
-    if (token.type !== 'token') {
-        throw new Error(`Expected a token, got ${token.type}`);
-    }
-
-    if (token.token.type !== 'separator') {
-        throw new Error(`Expected a separator, got ${token.token.type}`);
-    }
+    assert(token.type === 'token', `Expected a token, got ${token.type}`);
+    assert(token.token.type === 'separator', `Expected a separator, got ${token.token.type}`);
 
     return token.token.value;
 }
 
 function fetchTokenValue(token: AbstractSyntaxTree): LuaValue {
-    if (token.type !== 'token') {
-        throw new Error(`Expected a token, got ${token.type}`);
-    }
+    assert(token.type === 'token', `Expected a token, got ${token.type}`);
 
     function convertToNumber(value: string): number {
         return parseInt(value);
@@ -219,10 +180,197 @@ function fetchTokenValue(token: AbstractSyntaxTree): LuaValue {
     return toLuaValue(null);
 }
 
-function evaluateExpression(expression: AbstractSyntaxTree, scope: LuaScope): LuaValue {
-    if (expression.type !== 'exp') {
-        throw new Error(`Expected an exp, got ${expression.type}`);
+function evaluateBinaryOperator(lhsExpression: AbstractSyntaxTree, operator: AbstractSyntaxTree, rhsExpression: AbstractSyntaxTree, scope: LuaScope): LuaValue {
+    const lhs = evaluateExpression(lhsExpression, scope);
+    const op = fetchOperator(operator);
+
+    switch (op.value) {
+        case 'AND':
+            debug(`Evaluating 'and' expression and short-circuiting if necessary`);
+            // Short-circuiting
+            if (isFalsyLuaValue(lhs)) {
+                debug(`Short-circuiting 'and' expression`);
+                return toLuaValue(false);
+            }
+
+            return evaluateExpression(rhsExpression, scope);
+        case 'OR':
+            debug(`Evaluating 'or' expression and short-circuiting if necessary`);
+            // Short-circuiting
+            if (isTruthyLuaValue(lhs)) {
+                debug(`Short-circuiting 'or' expression`);
+                return lhs;
+            }
+
+            return evaluateExpression(rhsExpression, scope);
     }
+
+    const rhs = evaluateExpression(rhsExpression, scope);
+
+    switch (op.value) {
+        case '+':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
+                return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) + (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
+            }
+
+            assert(lhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue + rhs.jsValue);
+        case '-':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
+                return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) - (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
+            }
+
+            assert(lhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue - rhs.jsValue);
+        case '*':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
+                return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) * (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
+            }
+
+            assert(lhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue * rhs.jsValue);
+        case '/':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
+                return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) / (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
+            }
+
+            assert(lhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue / rhs.jsValue);
+        case '^':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
+                return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) ** (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
+            }
+
+            assert(lhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue ** rhs.jsValue);
+        case '%':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
+                return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) % (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
+            }
+
+            assert(lhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform arithmetic on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue % rhs.jsValue);
+        case '..':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
+                return toLuaValue('' + lhs.jsValue + rhs.jsValue);
+            }
+
+            // TODO: call metatable __concat
+
+            return toLuaValue(null);
+        case '<':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
+                return toLuaValue(lhs.jsValue < rhs.jsValue);
+            }
+
+            // TODO: call metatable __lt
+            return toLuaValue(null);
+        case '<=':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
+                return toLuaValue(lhs.jsValue <= rhs.jsValue);
+            }
+
+            // TODO: call metatable __le
+            return toLuaValue(null);
+        case '>':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
+                return toLuaValue(lhs.jsValue > rhs.jsValue);
+            }
+
+            // TODO: call metatable __lt (invert lhs and rhs)
+            return toLuaValue(null);
+        case '>=':
+            if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
+                return toLuaValue(lhs.jsValue >= rhs.jsValue);
+            }
+
+            // TODO: call metatable __le (invert lhs and rhs)
+            return toLuaValue(null);
+        case '==':
+            if (lhs.type !== rhs.type) {
+                return toLuaValue(false);
+            }
+
+            return toLuaValue(lhs.jsValue === rhs.jsValue);
+        case '~=':
+            if (lhs.type !== rhs.type) {
+                return toLuaValue(true);
+            }
+
+            return toLuaValue(lhs.jsValue !== rhs.jsValue);
+        case '&':
+            assert(lhs.type === LuaType.Number, `Attempt to perform bitwise on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform bitwise on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue & rhs.jsValue);
+        case '|':
+            assert(lhs.type === LuaType.Number, `Attempt to perform bitwise on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform bitwise on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue | rhs.jsValue);
+        case '~':
+            assert(lhs.type === LuaType.Number, `Attempt to perform bitwise on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform bitwise on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue ^ rhs.jsValue);
+        case '<<':
+            assert(lhs.type === LuaType.Number, `Attempt to perform bitwise on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform bitwise on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue << rhs.jsValue);
+        case '>>':
+            assert(lhs.type === LuaType.Number, `Attempt to perform bitwise on a ${lhs.type} value`);
+            assert(rhs.type === LuaType.Number, `Attempt to perform bitwise on a ${rhs.type} value`);
+
+            return toLuaValue(lhs.jsValue >> rhs.jsValue);
+    }
+
+    throw new Error(`Unrecognized binary operator: ${op.value}`);
+}
+
+function evaluateUnaryOperator(operator: AbstractSyntaxTree, rhsExpression: AbstractSyntaxTree, scope: LuaScope): LuaValue {
+    const op = fetchOperator(operator);
+    const rhs = evaluateExpression(rhsExpression, scope);
+
+    switch (op.value) {
+        case '-':
+            if (rhs.type !== LuaType.Number) {
+                return toLuaValue(null);
+            }
+
+            return toLuaValue(-rhs.jsValue);
+        case 'not':
+            return toLuaValue(isFalsyLuaValue(rhs));
+        case '#':
+            if (rhs.type !== LuaType.String) {
+                return toLuaValue(null);
+            }
+
+            return toLuaValue(rhs.jsValue.length);
+        case '~':
+            assert(rhs.type === LuaType.Number, `Attempt to perform bitwise on a ${rhs.type} value`);
+
+            return toLuaValue(~rhs.jsValue);
+    }
+
+    throw new Error(`Unrecognized binary operator: ${op.value}`);
+}
+
+function evaluateExpression(expression: AbstractSyntaxTree, scope: LuaScope): LuaValue {
+    assert(expression.type === 'exp', `Expected an exp, got ${expression.type}`);
+    assert(expression.children.length > 0, `Invalid exp without children (how did we get here?)`);
 
     debug(`Evaluating expression '${expression.children.map(p => p.type)}'`);
 
@@ -242,253 +390,24 @@ function evaluateExpression(expression: AbstractSyntaxTree, scope: LuaScope): Lu
                 return evaluatePrefixedExpression(expression.children[0], scope);
         }
     } else if (expression.children.length === 3 && expression.children[1].type === 'binop') {
-        const lhs = evaluateExpression(expression.children[0], scope);
-        const op = fetchOperator(expression.children[1]).value;
-
-        switch (op) {
-            case 'AND':
-                debug(`Evaluating 'and' expression and short-circuiting if necessary`);
-                // Short-circuiting
-                if (isFalsyLuaValue(lhs)) {
-                    debug(`Short-circuiting 'and' expression`);
-                    return toLuaValue(false);
-                }
-
-                return evaluateExpression(expression.children[2], scope);
-            case 'OR':
-                debug(`Evaluating 'or' expression and short-circuiting if necessary`);
-                // Short-circuiting
-                if (isTruthyLuaValue(lhs)) {
-                    debug(`Short-circuiting 'or' expression`);
-                    return lhs;
-                }
-
-                return evaluateExpression(expression.children[2], scope);
-        }
-
-        const rhs = evaluateExpression(expression.children[2], scope);
-
-        switch (op) {
-            case '+':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
-                    return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) + (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
-                }
-
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue + rhs.jsValue);
-            case '-':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
-                    return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) - (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
-                }
-
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue - rhs.jsValue);
-            case '*':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
-                    return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) * (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
-                }
-
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue * rhs.jsValue);
-            case '/':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
-                    return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) / (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
-                }
-
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue / rhs.jsValue);
-            case '^':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
-                    return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) ** (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
-                }
-
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue ** rhs.jsValue);
-            case '%':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && (rhs.type === LuaType.String || rhs.type === LuaType.Number)) {
-                    return toLuaValue((lhs.type === LuaType.String ? parseFloat(lhs.jsValue) : lhs.jsValue) % (rhs.type === LuaType.String ? parseFloat(rhs.jsValue) : rhs.jsValue));
-                }
-
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform arithmetic on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue % rhs.jsValue);
-            case '..':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
-                    return toLuaValue('' + lhs.jsValue + rhs.jsValue);
-                }
-
-                // TODO: call metatable __concat
-                return toLuaValue(null);
-            case '<':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
-                    return toLuaValue(lhs.jsValue < rhs.jsValue);
-                }
-
-                // TODO: call metatable __lt
-                return toLuaValue(null);
-            case '<=':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
-                    return toLuaValue(lhs.jsValue <= rhs.jsValue);
-                }
-
-                // TODO: call metatable __le
-                return toLuaValue(null);
-            case '>':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
-                    return toLuaValue(lhs.jsValue > rhs.jsValue);
-                }
-
-                // TODO: call metatable __lt (invert lhs and rhs)
-                return toLuaValue(null);
-            case '>=':
-                if ((lhs.type === LuaType.String || lhs.type === LuaType.Number) && lhs.type === rhs.type) {
-                    return toLuaValue(lhs.jsValue >= rhs.jsValue);
-                }
-
-                // TODO: call metatable __le (invert lhs and rhs)
-                return toLuaValue(null);
-            case '==':
-                if (lhs.type !== rhs.type) {
-                    return toLuaValue(false);
-                }
-
-                return toLuaValue(lhs.jsValue === rhs.jsValue);
-            case '~=':
-                if (lhs.type !== rhs.type) {
-                    return toLuaValue(true);
-                }
-
-                return toLuaValue(lhs.jsValue !== rhs.jsValue);
-            case '&':
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue & rhs.jsValue);
-            case '|':
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue | rhs.jsValue);
-            case '~':
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue ^ rhs.jsValue);
-            case '<<':
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue << rhs.jsValue);
-            case '>>':
-                if (lhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${lhs.type} value`);
-                }
-
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(lhs.jsValue >> rhs.jsValue);
-        }
+        return evaluateBinaryOperator(expression.children[0], expression.children[1], expression.children[2], scope);
     } else if (expression.children.length === 2 && expression.children[0].type === 'unop') {
-        const op = fetchOperator(expression.children[0]).value;
-        const rhs = evaluateExpression(expression.children[1], scope);
-
-        switch (op) {
-            case '-':
-                if (rhs.type !== LuaType.Number) {
-                    return toLuaValue(null);
-                }
-
-                return toLuaValue(-rhs.jsValue);
-            case 'not':
-                return toLuaValue(isFalsyLuaValue(rhs));
-            case '#':
-                if (rhs.type !== LuaType.String) {
-                    return toLuaValue(null);
-                }
-
-                return toLuaValue(rhs.jsValue.length);
-            case '~':
-                if (rhs.type !== LuaType.Number) {
-                    throw new Error(`Attempt to perform bitwise on a ${rhs.type} value`);
-                }
-
-                return toLuaValue(~rhs.jsValue);
-        }
+        return evaluateUnaryOperator(expression.children[0], expression.children[1], scope);
     }
 
     return toLuaValue(null);
 }
 
 function evaluateExpressionList(explist: AbstractSyntaxTree, scope: LuaScope): LuaValue[] {
-    if (explist.type !== 'explist') {
-        throw new Error(`Expected an explist, got ${explist.type}`);
-    }
+    assert(explist.type === 'explist', `Expected an explist, got ${explist.type}`);
 
     const values: LuaValue[] = [];
     for (const exp of explist.children) {
+        if (exp.type === 'token') {
+            // `,`
+            continue;
+        }
+
         values.push(evaluateExpression(exp, scope));
     }
 
@@ -496,9 +415,7 @@ function evaluateExpressionList(explist: AbstractSyntaxTree, scope: LuaScope): L
 }
 
 function fetchVariable(variable: AbstractSyntaxTree, scope: LuaScope): LuaValue {
-    if (variable.type !== 'var') {
-        throw new Error(`Expected a var, got ${variable.type}`);
-    }
+    assert(variable.type === 'var', `Expected a var, got ${variable.type}`);
 
     if (variable.children.length === 1) {
         const varname = toLuaValue(fetchIdentifier(variable.children[0]));
@@ -526,16 +443,12 @@ function fetchVariable(variable: AbstractSyntaxTree, scope: LuaScope): LuaValue 
         throw new Error(`'variable' is not a table`);
     } else if (variable.children.length === 3) { // prefixexp '.' NAME
         const table = evaluatePrefixedExpression(variable.children[0], scope);
-        const index = evaluateExpression(variable.children[1], scope);
+        const index = fetchIdentifier(variable.children[2]);
 
-        debug(`Fetching index '${index.jsValue}' from table '${table.jsValue}'`);
+        debug(`Fetching index '${index}' from table '${table.jsValue}'`);
 
         if (table.type === LuaType.Table) {
-            if (index.type === LuaType.Nil) {
-                throw new Error(`'index' cannot be nil`);
-            }
-
-            return table.jsValue.get(index) ?? toLuaValue(null);
+            return table.jsValue.get(toLuaValue(index)) ?? toLuaValue(null);
         }
 
         throw new Error(`'variable' is not a table`);
@@ -546,9 +459,7 @@ function fetchVariable(variable: AbstractSyntaxTree, scope: LuaScope): LuaValue 
 }
 
 function evaluatePrefixedExpression(prefixexp: AbstractSyntaxTree, scope: LuaScope): LuaValue {
-    if (prefixexp.type !== 'prefixexp') {
-        throw new Error(`Expected a prefixexp, got ${prefixexp.type}`);
-    }
+    assert(prefixexp.type === 'prefixexp', `Expected a prefixexp, got ${prefixexp.type}`);
 
     debug(`Evaluating prefixed expression '${prefixexp.children.map(p => p.type)}'`);
     if (prefixexp.children.length === 1) {
@@ -565,21 +476,16 @@ function evaluatePrefixedExpression(prefixexp: AbstractSyntaxTree, scope: LuaSco
     }
 
     // Should never happen
-    //throw new Error(`Unable to evaluate prefixed expression`);
-    return toLuaValue(null);
+    throw new Error(`Unable to evaluate prefixed expression`);
 }
 
 function callFunction(functioncall: AbstractSyntaxTree, scope: LuaScope): LuaValue {
-    if (functioncall.type !== 'functioncall') {
-        throw new Error(`Expected a functioncall, got ${functioncall.type}`);
-    }
+    assert(functioncall.type === 'functioncall', `Expected a functioncall, got ${functioncall.type}`);
 
     if (functioncall.children.length === 2) { // prefixexp args
         const func = evaluatePrefixedExpression(functioncall.children[0], scope);
         const args = functioncall.children[1];
-        if (args.type !== 'args') {
-            throw new Error(`Expected an args, got ${args.type}`);
-        }
+        assert(args.type === 'args', `Expected an args, got ${args.type}`);
 
         if (func.type === LuaType.Function) {
             if (args.children.length === 1 && args.children[0].type === 'token') { // function 'string'
@@ -663,9 +569,7 @@ function callFunction(functioncall: AbstractSyntaxTree, scope: LuaScope): LuaVal
 }
 
 function defineVariables(varlist: AbstractSyntaxTree, explist: AbstractSyntaxTree, scope: LuaScope) {
-    if (varlist.type !== 'varlist') {
-        throw new Error(`Expected a varlist, got ${varlist.type}`);
-    }
+    assert(varlist.type === 'varlist', `Expected a varlist, got ${varlist.type}`);
 
     const expValues = evaluateExpressionList(explist, scope);
 
@@ -682,9 +586,7 @@ function defineVariables(varlist: AbstractSyntaxTree, explist: AbstractSyntaxTre
             const index = evaluateExpression(v.children[2], scope);
 
             if (table.type === LuaType.Table) {
-                if (index.type === LuaType.Nil) {
-                    throw new Error(`'index' cannot be nil`);
-                }
+                assert(index.type !== LuaType.Nil, `'index' cannot be nil`);
 
                 debug(`Assigning expression ${i} type ${expValues[i].type} to table index '${index.jsValue}'`);
 
@@ -723,9 +625,7 @@ function defineVariables(varlist: AbstractSyntaxTree, explist: AbstractSyntaxTre
 }
 
 function defineLocalVariables(attnamelist: AbstractSyntaxTree, explist: AbstractSyntaxTree, scope: LuaScope) {
-    if (attnamelist.type !== 'attnamelist') {
-        throw new Error(`Expected an attnamelist, got ${attnamelist.type}`);
-    }
+    assert(attnamelist.type === 'attnamelist', `Expected an attnamelist, got ${attnamelist.type}`);
 
     const expValues = evaluateExpressionList(explist, scope);
 
@@ -757,9 +657,7 @@ function defineLocalFunction(funcname: AbstractSyntaxTree, funcbody: AbstractSyn
 }
 
 function runWhileLoop(condition: AbstractSyntaxTree, block: AbstractSyntaxTree, scope: LuaScope) {
-    if (condition.type !== 'exp') {
-        throw new Error(`Expected an exp, got ${condition.type}`);
-    }
+    assert(condition.type === 'exp', `Expected an exp, got ${condition.type}`);
 
     debug(`Running while loop`);
 
@@ -772,9 +670,7 @@ function runWhileLoop(condition: AbstractSyntaxTree, block: AbstractSyntaxTree, 
 }
 
 function runRepeatLoop(block: AbstractSyntaxTree, condition: AbstractSyntaxTree, scope: LuaScope) {
-    if (condition.type !== 'exp') {
-        throw new Error(`Expected an exp, got ${condition.type}`);
-    }
+    assert(condition.type === 'exp', `Expected an exp, got ${condition.type}`);
 
     debug(`Running repeat loop`);
 
@@ -787,13 +683,8 @@ function runRepeatLoop(block: AbstractSyntaxTree, condition: AbstractSyntaxTree,
 }
 
 function runIfStatement(ifstat: AbstractSyntaxTree, scope: LuaScope) {
-    if (ifstat.type !== 'stat') {
-        throw new Error(`Expected a stat, got ${ifstat.type}`);
-    }
-
-    if (ifstat.children[0].type !== 'token' || ifstat.children[0].token.type !== 'reserved' || ifstat.children[0].token.value !== 'IF') {
-        throw new Error(`Expected an IF statement, got ${ifstat.children[0].type}`);
-    }
+    assert(ifstat.type === 'stat', `Expected a stat, got ${ifstat.type}`);
+    assert(ifstat.children[0].type === 'token' && ifstat.children[0].token.type === 'reserved' && ifstat.children[0].token.value === 'IF', `Expected an IF statement, got ${ifstat.children[0].type}`);
 
     debug(`Running if statement`);
 
@@ -807,9 +698,9 @@ function runIfStatement(ifstat: AbstractSyntaxTree, scope: LuaScope) {
             break;
         }
 
-        if (currToken.type !== 'token' || currToken.token.type !== 'reserved' || currToken.token.value !== 'IF' && currToken.token.value !== 'ELSEIF' && currToken.token.value !== 'ELSE') {
-            throw new Error(`Expected an IF, ELSEIF or ELSE statement, got ${currToken.type}`);
-        }
+        assert(currToken.type === 'token', `Expected a token, got ${currToken.type}`);
+        assert(currToken.token.type === 'reserved', `Expected a reserved token, got ${currToken.token.type}`);
+        assert(currToken.token.value === 'IF' || currToken.token.value === 'ELSEIF' || currToken.token.value === 'ELSE', `Expected an IF, ELSEIF or ELSE statement, got ${currToken.token.value}`);
 
         if (currToken.token.value === 'ELSE') {
             runBlock(ifstat.children[currIndex + 1], new LuaScope(scope));
@@ -825,30 +716,19 @@ function runIfStatement(ifstat: AbstractSyntaxTree, scope: LuaScope) {
 }
 
 function runForLoop(variableName: AbstractSyntaxTree, initalValue: AbstractSyntaxTree, limit: AbstractSyntaxTree, step: AbstractSyntaxTree | null, block: AbstractSyntaxTree, scope: LuaScope) {
-    if (variableName.type !== 'token') {
-        throw new Error(`Expected a token, got ${variableName.type}`);
-    }
+    assert(variableName.type === 'token', `Expected a token, got ${variableName.type}`);
 
     debug(`Running for loop with variable '${variableName.token.value}'`);
     const variable = evaluateExpression(initalValue, scope);
 
-    if (variable.type !== LuaType.Number) {
-        throw new Error(`For loop variable '${variableName.token.value}' is not a number`);
-    }
+    assert(variable.type === LuaType.Number, `For loop variable '${variableName.token.value}' is not a number`);
 
     let stopConditionValue = evaluateExpression(limit, scope);
-    if (stopConditionValue.type !== LuaType.Number) {
-        throw new Error(`For loop stop condition is not a number`);
-    }
+    assert(stopConditionValue.type === LuaType.Number, `For loop stop condition is not a number`);
 
     const stepValue = step ? evaluateExpression(step, scope) : toLuaValue(1);
-    if (stepValue.type !== LuaType.Number) {
-        throw new Error(`For loop step is not a number`);
-    }
-
-    if (stepValue.jsValue === 0) {
-        throw new Error(`For loop step cannot be zero`);
-    }
+    assert(stepValue.type === LuaType.Number, `For loop step is not a number`);
+    assert(stepValue.jsValue !== 0, `For loop step cannot be zero`);
 
     for (let i = variable.jsValue; stepValue.jsValue > 0 ? i <= stopConditionValue.jsValue : i >= stopConditionValue.jsValue; i += stepValue.jsValue) {
         const forScope = new LuaScope(scope);
@@ -856,16 +736,12 @@ function runForLoop(variableName: AbstractSyntaxTree, initalValue: AbstractSynta
         runBlock(block, forScope, true);
         forScope.closeVariables();
         stopConditionValue = evaluateExpression(limit, forScope);
-        if (stopConditionValue.type !== LuaType.Number) {
-            throw new Error(`For loop stop condition is not a number`);
-        }
+        assert(stopConditionValue.type === LuaType.Number, `For loop stop condition is not a number`);
     }
 }
 
 function runForInLoop(namelist: AbstractSyntaxTree, explist: AbstractSyntaxTree, block: AbstractSyntaxTree, scope: LuaScope) {
-    if (namelist.type !== 'namelist') {
-        throw new Error(`Expected a namelist, got ${namelist.type}`);
-    }
+    assert(namelist.type === 'namelist', `Expected a namelist, got ${namelist.type}`);
 
     const expValues = evaluateExpressionList(explist, scope);
 
@@ -880,9 +756,7 @@ function runDoBlock(block: AbstractSyntaxTree, scope: LuaScope) {
 }
 
 function runStatement(statement: AbstractSyntaxTree, scope: LuaScope) {
-    if (statement.type !== 'stat') {
-        throw new Error(`Expected a statement, got ${statement.type}`);
-    }
+    assert(statement.type === 'stat', `Expected a statement, got ${statement.type}`);
 
     if (statement.children[0].type === 'varlist') { // assignment
         const varlist = statement.children[0];
@@ -937,9 +811,7 @@ function runStatement(statement: AbstractSyntaxTree, scope: LuaScope) {
 }
 
 function runReturnStatement(retstat: AbstractSyntaxTree, scope: LuaScope): LuaValue {
-    if (retstat.type !== 'retstat') {
-        throw new Error(`Expected a return statement, got ${retstat.type}`);
-    }
+    assert(retstat.type === 'retstat', `Expected a return statement, got ${retstat.type}`);
 
     const returnValues = evaluateExpressionList(retstat.children[1], scope);
 
@@ -947,21 +819,15 @@ function runReturnStatement(retstat: AbstractSyntaxTree, scope: LuaScope): LuaVa
 }
 
 function runBlock(block: AbstractSyntaxTree, scope: LuaScope, allowBreak = false): LuaValue {
-    if (block.type !== 'block') {
-        throw new Error(`Expected a chunk, got ${block.type}`);
-    }
+    assert(block.type === 'block', `Expected a block, got ${block.type}`);
 
     for (const statement of block.children) {
-        if (statement.type !== 'stat' && statement.type !== 'retstat') {
-            throw new Error(`Expected a statement or a return statement, got ${statement.type}`);
-        }
+        assert(statement.type === 'stat' || statement.type === 'retstat', `Expected a statement or a return statement, got ${statement.type}`);
 
         if (statement.type === 'retstat') {
             return runReturnStatement(statement, scope);
         } else if (statement.type === 'stat' && statement.children.length === 1 && statement.children[0].type === 'token' && statement.children[0].token.type === 'reserved' && statement.children[0].token.value === 'BREAK') {
-            if (!allowBreak) {
-                throw new Error(`'break' statement outside loop`);
-            }
+            assert(allowBreak, `'break' statement outside loop`);
 
             return toLuaValue(null);
         }
@@ -973,13 +839,23 @@ function runBlock(block: AbstractSyntaxTree, scope: LuaScope, allowBreak = false
 }
 
 export function runChunk(tree: AbstractSyntaxTree, globalScope: LuaScope): LuaValue {
-    if (tree.type !== 'chunk') {
-        throw new Error(`Expected a chunk, got ${tree.type}`);
-    }
+    assert(tree.type === 'chunk', `Expected a chunk, got ${tree.type}`);
 
     return runBlock(tree.children[0], new LuaScope(globalScope));
 }
 
 function debug(...args: any[]) {
+    if (true) {
+        return;
+    }
+
     console.log("[DEBUG]", ...args);
+}
+
+export function stringifyLuaValue(value: LuaValue): string {
+    if (value.type === LuaType.Nil) {
+        return `<nil>`;
+    }
+
+    return `<${value.type}>(${JSON.stringify(value.jsValue)})`;
 }
