@@ -170,6 +170,7 @@ export function tokenizer(code: string, includeWhitespace: boolean = false, incl
 
     // Helper: push token and advance position/line/column
     let i = 0;
+    let wasCR = false;
     const pushToken = (t: Omit<Token, 'line' | 'column'>, match: string) => {
         const token: Token = { ...t, line: line, column: column + 1 };
         // Apply filters
@@ -183,13 +184,19 @@ export function tokenizer(code: string, includeWhitespace: boolean = false, incl
         for (let k = 0; k < match.length; k++) {
             const ch = match[k];
             if (ch === '\n') {
-                line++;
+                if (!wasCR) {
+                    line++;
+                }
+
                 column = 0;
+                wasCR = false;
             } else if (ch === '\r') {
                 line++;
                 column = 0;
+                wasCR = true;
             } else {
                 column++;
+                wasCR = false;
             }
         }
         i += match.length;

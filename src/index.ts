@@ -19,7 +19,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { parseArgs } from "node:util";
 
-import { runChunk, stringifyLuaValue } from "./interpreter.js";
+import { runChunk, setDebugMode, stringifyLuaValue } from "./interpreter.js";
 import { ParsingError, parser } from "./parser.js";
 import luaStandardLibrary from "./stdlib.js";
 import { tokenizer } from "./tokenizer.js";
@@ -35,6 +35,9 @@ const { positionals, values } = parseArgs({
             type: 'string',
             short: 'o',
         },
+        debug: {
+            type: 'boolean',
+        },
     },
     allowPositionals: true,
 });
@@ -45,12 +48,15 @@ if (values.help || positionals.length === 0) {
 Options:
   -h, --help            Show this help message
   -o, --output <dir>    Output directory for tokens.json and ast.json
+  --debug               Enable debug mode
 `);
     process.exit(positionals.length === 0 ? 1 : 0);
 }
 
 const filename = positionals[0];
 const outputDir = values.output ?? '.';
+const debugMode = values.debug ?? false;
+setDebugMode(debugMode);
 
 const code = await readFile(filename, 'utf8');
 

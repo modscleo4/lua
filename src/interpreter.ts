@@ -844,12 +844,17 @@ export function runChunk(tree: AbstractSyntaxTree, globalScope: LuaScope): LuaVa
     return runBlock(tree.children[0], new LuaScope(globalScope));
 }
 
+let debugMode = false;
 function debug(...args: any[]) {
-    if (true) {
+    if (!debugMode) {
         return;
     }
 
-    console.log("[DEBUG]", ...args);
+    console.error("\x1b[33m[DEBUG] -> %s\x1b[0m", ...args);
+}
+
+export function setDebugMode(enabled: boolean) {
+    debugMode = enabled;
 }
 
 export function stringifyLuaValue(value: LuaValue): string {

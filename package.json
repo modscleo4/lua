@@ -8,6 +8,7 @@
     "build": "tsc",
     "dev": "tsc -w",
     "start": "node . test.lua",
+    "debug": "node . test.lua --debug",
     "test": "tsc -p tsconfig.test.json && node test/main.spec.js"
   },
   "keywords": [],
